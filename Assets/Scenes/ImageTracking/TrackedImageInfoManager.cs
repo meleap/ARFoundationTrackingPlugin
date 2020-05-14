@@ -134,21 +134,32 @@ public class TrackedImageInfoManager : MonoBehaviour
         //    );
     }
 
+    // 検出したマーカに関する情報をマーカに重畳表示する（デバッグ用）
+    // 使用の際はARTrackedImageManagerのTrackedImagePrefabをセットすること
     void UpdateInfo(ARTrackedImage trackedImage)
     {
         // Set canvas camera
         var canvas = trackedImage.GetComponentInChildren<Canvas>();
         canvas.worldCamera = worldSpaceCanvasCamera;
 
+        var trackedImageTransform = trackedImage.transform;
+
         // Update information about the tracked image
         var text = canvas.GetComponentInChildren<Text>();
         text.text = string.Format(
-            "{0}\ntrackingState: {1}\nGUID: {2}\nReference size: {3} cm\nDetected size: {4} cm",
+            "{0}\ntrackingState: {1}\nGUID: {2}\nReference size: {3} cm\nDetected size: {4} cm\nPosition(local): {5}\nRotation(local): {6}\nEuler angle(local): {7}\nPosition(global): {8}\nRotation(global): {9}\nEuler angle(global): {10}",
             trackedImage.referenceImage.name,
             trackedImage.trackingState,
             trackedImage.referenceImage.guid,
             trackedImage.referenceImage.size * 100f,
-            trackedImage.size * 100f);
+            trackedImage.size * 100f,
+            trackedImageTransform.localPosition,
+            trackedImageTransform.localRotation,
+            trackedImageTransform.localRotation.eulerAngles,
+            trackedImageTransform.position,
+            trackedImageTransform.rotation,
+            trackedImageTransform.rotation.eulerAngles
+        );
 
         var planeParentGo = trackedImage.transform.GetChild(0).gameObject;
         var planeGo = planeParentGo.transform.GetChild(0).gameObject;
@@ -160,10 +171,6 @@ public class TrackedImageInfoManager : MonoBehaviour
 
             // The image extents is only valid when the image is being tracked
             trackedImage.transform.localScale = new Vector3(trackedImage.size.x, 1f, trackedImage.size.y);
-
-            // Set the texture
-            var material = planeGo.GetComponentInChildren<MeshRenderer>().material;
-            material.mainTexture = (trackedImage.referenceImage.texture == null) ? defaultTexture : trackedImage.referenceImage.texture;
         }
         else
         {
