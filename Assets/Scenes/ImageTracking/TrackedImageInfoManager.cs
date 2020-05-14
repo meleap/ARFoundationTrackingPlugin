@@ -16,8 +16,9 @@ public class TrackedImageInfoManager : MonoBehaviour
     [Tooltip("AR座標系の回転のうちY軸方向のみを修正するか,falseの場合は全ての軸で」調整を行う")]
     public bool isOnlyAdjustYAxis = true; // AR座標系の回転のうちY軸方向のみを修正するか
 
-    // 前回の座標系調整時間
-    private float _previousAdjustTime = 0; 
+    [Tooltip("座標系調整のインターバル.前回の座標調整からこの時間経過しないと座標調整が行われない")]
+    public float minIntervalTime = 2.0f; // 座標系調整のインターバル.前回の座標調整からこの時間経過しないと座標調整が行われない
+    private float _previousAdjustTime = 0; // 前回の座標系調整時間
 
     [Tooltip("AR座標系の基準")]
     Transform _arOriginTransform = null;
@@ -28,9 +29,11 @@ public class TrackedImageInfoManager : MonoBehaviour
     // 座標系を時間をかけて調整するためのクラス
     private TransformMover _arOriginMover;
 
+    [Header("Debug")]
+    public bool isDebug = false;
     [SerializeField]
     [Tooltip("The camera to set on the world space UI canvas for each instantiated image info.")]
-    Camera m_WorldSpaceCanvasCamera;
+    Camera m_WorldSpaceCanvasCamera;    
 
     /// <summary>
     /// The prefab has a world space UI canvas,
@@ -178,17 +181,42 @@ public class TrackedImageInfoManager : MonoBehaviour
         }
     }
 
+    // 検出されたマーカに対する処理
+    // 複数のマーカが同時に検出されないことを前提にしている
     void OnTrackedImagesChanged(ARTrackedImagesChangedEventArgs eventArgs)
     {
-        foreach (var trackedImage in eventArgs.added)
+        // インターバルチェック
+        if (Time.time - _previousAdjustTime < minIntervalTime)
         {
-            // Give the initial image a reasonable default scale
-            trackedImage.transform.localScale = new Vector3(0.01f, 1f, 0.01f);
-
-            UpdateInfo(trackedImage);
+            return;
         }
 
+        // Debug.Log("Added: " + eventArgs.added.Count);
+        // Debug.Log("Updated: " + eventArgs.updated.Count);
+        // Debug.Log("Removed: " + eventArgs.removed.Count);
+
+        // このフレームで初めて検出されたマーカの処理
+        foreach (var trackedImage in eventArgs.added)
+        {
+            UpdateOrigin(trackedImage);
+            if (isDebug)
+            {
+                Debug.Log("Add " + trackedImage.referenceImage.name);
+                UpdateInfo(trackedImage);
+            }
+            // Give the initial image a reasonable default scale
+            // trackedImage.transform.localScale = new Vector3(0.01f, 1f, 0.01f);
+        }
+
+        // このフレームで更新されたマーカの処理
         foreach (var trackedImage in eventArgs.updated)
-            UpdateInfo(trackedImage);
+        {
+            UpdateOrigin(trackedImage);
+            if (isDebug)
+            {
+                Debug.Log("Update " + trackedImage.referenceImage.name);
+                UpdateInfo(trackedImage);
+            }
+        }
     }
 }
