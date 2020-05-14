@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.XR.ARSubsystems;
@@ -12,10 +11,18 @@ using UnityEngine.XR.ARFoundation;
 [RequireComponent(typeof(ARTrackedImageManager))]
 public class TrackedImageInfoManager : MonoBehaviour
 {
-
+    // マーカの位置リスト
+    // マーカの名前を登録した画像と同じ名前にすること
+    [Tooltip("unity座標系のマーカリスト（マーカオブジェクトの名前をリファレンス画像ライブラリに登録した名前にすること）")]
+    [SerializeField]
+    List<Transform> _MarkerTransformOnUnityCoordinate = null;
+    
     [Tooltip("AR座標系の回転のうちY軸方向のみを修正するか,falseの場合は全ての軸で」調整を行う")]
     public bool isOnlyAdjustYAxis = true; // AR座標系の回転のうちY軸方向のみを修正するか
 
+    [Header("Adjust method")]
+    [Tooltip("座標系の調整にかける時間[sec]（0だとすぐに調整終了 ）")]
+    public float moveTime = 1.0f;
     [Tooltip("座標系調整のインターバル.前回の座標調整からこの時間経過しないと座標調整が行われない")]
     public float minIntervalTime = 2.0f; // 座標系調整のインターバル.前回の座標調整からこの時間経過しないと座標調整が行われない
     private float _previousAdjustTime = 0; // 前回の座標系調整時間
@@ -25,6 +32,8 @@ public class TrackedImageInfoManager : MonoBehaviour
 
     // マーカの名前からUnity座標系におけるマーカーのTransformを引くための辞書
     private Dictionary<string, Transform> _mDicMarkerNameToTransform;
+
+    ARTrackedImageManager _mTrackedImageManager;
 
     // 座標系を時間をかけて調整するためのクラス
     private TransformMover _arOriginMover;
@@ -46,34 +55,64 @@ public class TrackedImageInfoManager : MonoBehaviour
     }
 
     [SerializeField]
-    [Tooltip("If an image is detected but no source texture can be found, this texture is used instead.")]
-    Texture2D m_DefaultTexture;
+    GameObject trackedImagePrefab = null;
+
+    //[SerializeField]
+    //[Tooltip("If an image is detected but no source texture can be found, this texture is used instead.")]
+    //Texture2D m_DefaultTexture;
 
     /// <summary>
     /// If an image is detected but no source texture can be found,
     /// this texture is used instead.
     /// </summary>
-    public Texture2D defaultTexture
-    {
-        get { return m_DefaultTexture; }
-        set { m_DefaultTexture = value; }
-    }
-
-    ARTrackedImageManager m_TrackedImageManager;
+    //public Texture2D defaultTexture
+    //{
+    //    get { return m_DefaultTexture; }
+    //    set { m_DefaultTexture = value; }
+    //}
 
     void Awake()
     {
-        m_TrackedImageManager = GetComponent<ARTrackedImageManager>();
+        Debug.Log("Screen width: " + Screen.width + ", Screen height: " + Screen.height);
+        _previousAdjustTime = Time.time;
+        _mTrackedImageManager = GetComponent<ARTrackedImageManager>();
+        _mTrackedImageManager.trackedImagePrefab = trackedImagePrefab;
+
+        _arOriginTransform = transform;
+        _arOriginMover.target = _arOriginTransform;
+        _arOriginMover.moveTime = moveTime;
+
+        // マーカtransform取得用の辞書を作成
+        _mDicMarkerNameToTransform = new Dictionary<string, Transform>();
+        for (int i=0; i < _MarkerTransformOnUnityCoordinate.Count; i++)
+        {
+            var referenceImage = _mTrackedImageManager.referenceLibrary[i];
+            var referenceImageName = referenceImage.name;
+            // Debug.Log("Marker " + i + ", name: " + name);
+            foreach (var t in _MarkerTransformOnUnityCoordinate)
+            {
+                if (t.gameObject.name == referenceImageName)
+                {
+                    _mDicMarkerNameToTransform.Add(referenceImageName, t);
+                }
+            }
+        }
+        // 辞書の内容確認
+        // Debug.Log("DicMarkerNameToTransform: " + _mDicMarkerNameToTransform.Count);
+        // foreach (var pair in _mDicMarkerNameToTransform)
+        // {
+        //     Debug.Log("Pair: " + pair.Key + "->" + pair.Value);
+        // }
     }
 
     void OnEnable()
     {
-        m_TrackedImageManager.trackedImagesChanged += OnTrackedImagesChanged;
+        _mTrackedImageManager.trackedImagesChanged += OnTrackedImagesChanged;
     }
 
     void OnDisable()
     {
-        m_TrackedImageManager.trackedImagesChanged -= OnTrackedImagesChanged;
+        _mTrackedImageManager.trackedImagesChanged -= OnTrackedImagesChanged;
     }
 
     // マーカTransform用のY軸回転角度計算
