@@ -1,4 +1,4 @@
-﻿// 単眼カメラの映像を左右に分割してステレオ表示するシェーダ
+﻿// 単眼カメラの映像を左右に分割してステレオ表示するシェーダー
 Shader "XR/StereoShader"
 {
     Properties
@@ -25,12 +25,12 @@ Shader "XR/StereoShader"
             struct appdata
             {
                 float4 vertex : POSITION;
-                float2 uv : TEXCOORDO;
+                float2 uv : TEXCOORD0;
             };
 
             struct v2f
             {
-                float2 uv : TEXCOORDO;
+                float2 uv : TEXCOORD0;
                 float4 vertex : SV_POSITION;
             };
 
@@ -51,15 +51,15 @@ Shader "XR/StereoShader"
             {
                 float2 new_uv;
                 float scale = 1.0f / _MagScale;
-                // スクリーンの左右でそれぞれの中心から相対位置を考慮してUVを決定する
+                // スクリーンの左右でそれぞれの中心からの相対位置を考慮してUVを決定する
                 float centerX = i.uv.x < 0.5 ? _LeftCenterX : _RightCenterX;
-                new_uv.x = (i.uv.x - centerX) * scale + 0.5;
-                new_uv.y = (i.uv.y - _CenterY) * scale + 0.5;
+                new_uv.x = (i.uv.x - centerX) * scale + 0.5; 
+                new_uv.y = (i.uv.y - _CenterY) * scale + 0.5;           
                 // 参照範囲以外は黒で埋める
-                if(new_uv.x < 0 || 1 < new_uv.x || new_uv.y < 0 || 1 < new_uv.y)
+                if( new_uv.x < 0 || 1 < new_uv.x || new_uv.y < 0 || 1 < new_uv.y )
                 {
                     return fixed4(0,0,0,0);
-                }
+                }  
                 fixed4 col = tex2D(_MainTex, new_uv);
                 return col;
             }

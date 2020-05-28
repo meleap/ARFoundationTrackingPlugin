@@ -454,7 +454,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_ReferenceLibrary: {fileID: 11400000, guid: c86e375d7e7430442a1104e88fa21f21, type: 2}
   m_MaxNumberOfMovingImages: 2
-  m_TrackedImagePrefab: {fileID: 3312728602301253215, guid: 5d81b097707c58e4b949537763ba4bbe,
+  m_TrackedImagePrefab: {fileID: 8182956443887353202, guid: 7ab75e6d1363a42c883343aef7bc3596,
     type: 3}
 --- !u!114 &857573726
 MonoBehaviour:
@@ -472,11 +472,11 @@ MonoBehaviour:
   - {fileID: 352146746}
   - {fileID: 1264057987}
   isOnlyAdjustYAxis: 1
-  moveTime: 1
+  moveTime: 2
   minIntervalTime: 2
   isDebug: 0
   m_WorldSpaceCanvasCamera: {fileID: 1247506530}
-  trackedImagePrefab: {fileID: 3312728602301253215, guid: 5d81b097707c58e4b949537763ba4bbe,
+  trackedImagePrefab: {fileID: 8182956443887353202, guid: 7ab75e6d1363a42c883343aef7bc3596,
     type: 3}
 --- !u!1 &1247506529
 GameObject:
@@ -509,7 +509,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 2
-  m_BackGroundColor: {r: 0, g: 0, b: 0, a: 1}
+  m_BackGroundColor: {r: 0, g: 0.3019608, b: 0, a: 1}
   m_projectionMatrixMode: 1
   m_SensorSize: {x: 36, y: 24}
   m_LensShift: {x: 0, y: 0}
@@ -610,14 +610,14 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1247506529}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2811d094df72c41b08cca19380052052, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   ipdMilli: 64
   centerY: 0.5
-  magScale: 0.8
+  magScale: 0.5
 --- !u!1 &1264057986
 GameObject:
   m_ObjectHideFlags: 0
@@ -633,7 +633,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1264057987
 Transform:
   m_ObjectHideFlags: 0

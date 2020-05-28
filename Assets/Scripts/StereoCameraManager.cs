@@ -18,7 +18,6 @@ public class StereoCameraManager : MonoBehaviour
     private void Awake()
     {
         Shader shader = Shader.Find("XR/StereoShader");
-        Debug.LogWarning(shader);
         _mat = new Material(shader);
     }
 
