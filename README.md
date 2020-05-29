@@ -1,5 +1,6 @@
 # ARFoundationTrackingPlugin
 ARFoundationのImageTrackingを使ったAR座標系補正のサンプル
+マーカとなるラフレシアの画像を認識すると原点がラフレシア画像の中心部に補正される
 # サンプルシーン ImageTracking
 シーンの場所はScenes/ImageTracking
 
