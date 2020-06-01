@@ -1,7 +1,0 @@
-sceneSetups:
-- path: Assets/Scenes/ImageTracking/ImageTracking.unity
-  isLoaded: 1
-  isActive: 1
-- path: Assets/Scenes/SimpleAR.unity
-  isLoaded: 1
-  isActive: 0
