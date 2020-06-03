@@ -42,7 +42,7 @@ ARFoundationのImageTrackingを使ったAR座標系補正のサンプル
 1. TrackedImageInfoManagerの`Tracked Image Prefab`に`Prefabs/ImageInfoPrefab`をセット
 
 ## ステレオ表示
-１つのカメラでレンダリングした画像を左右に2分割してステレオ表示する.物理的なサイズと画素単位の変換にはunityのAPIから取得できるデバイスの画素密度[ppi]を用いる。
+１つのカメラでレンダリングした画像を左右に2分割してステレオ表示する.物理的なサイズと画素単位の変換にはunityのAPIから取得できるデバイスの画素密度[ppi]を用いる。（下図に関し、このプロジェクトでは[Pause][Resume] [Reload][Reset]ボタンは設置していない）
 
 
 <img src="https://github.com/meleap/ARFoundationImageTrackingCaribrationOrigin/blob/master/images/StereoOverview.png" width="512">
