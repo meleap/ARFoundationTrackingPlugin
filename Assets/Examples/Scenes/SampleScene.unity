@@ -356,7 +356,7 @@ MonoBehaviour:
   m_SerializedLibrary: {fileID: 11400000, guid: d8cdbb744c0e64555a4f0deba0d5e607,
     type: 2}
   m_MaxNumberOfMovingImages: 1
-  m_TrackedImagePrefab: {fileID: 4560458566152618875, guid: 9fef535c9ce5c47d8815cafcacbda5d4,
+  m_TrackedImagePrefab: {fileID: 4606153653296870861, guid: c770464900fd24ed4a902dd8e0ac5e57,
     type: 3}
 --- !u!114 &1971368398
 MonoBehaviour:
@@ -365,11 +365,13 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1971368394}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3e25ef0619b704b779a900929745d40c, type: 3}
+  m_Script: {fileID: 11500000, guid: f5875924d681544ba9737f2dc38792f1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_WorldSpaceCanvasCamera: {fileID: 302826151}
+  m_DefaultTexture: {fileID: 10305, guid: 0000000000000000f000000000000000, type: 0}
 --- !u!1 &1972300400
 GameObject:
   m_ObjectHideFlags: 0

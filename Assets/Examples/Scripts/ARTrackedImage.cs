@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 
-public class WorldAnchorInfo : MonoBehaviour
+public class WorldAnchoerParent : MonoBehaviour
 {
     [SerializeField]
     public Text worldAnchorInfoText;

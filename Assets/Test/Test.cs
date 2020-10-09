@@ -8,38 +8,29 @@ public class Test : MonoBehaviour
     GameObject worldAnchor;
 
     [SerializeField]
-    GameObject Marker;
+    GameObject BlueMarker;
+
+    [SerializeField]
+    GameObject RedMarker;
 
     void Start()
     {
-        var imageTarget = ImageTargetMaster.FindItem("PvP_Marker_2_0_1_Blue");
+        SetMarker("PvP_Marker_2_0_1_Blue", BlueMarker);
+        //SetMarker("PvP_Marker_3_0_4_Red", RedMarker);
+    }
 
-        var baseTransform = gameObject.transform;
+    void SetMarker(string imageTargetName, GameObject marker)
+    {
+        worldAnchor.transform.SetParent(marker.transform);
+        worldAnchor.transform.localPosition = Vector3.zero;
+        worldAnchor.transform.localRotation = Quaternion.identity;
 
-
-        var p1 = worldAnchor.transform.localPosition;
-
-        // marker position
-        //  (0, 1.33f, -5f),
-        // -90f, -180, 0
-
-        // origin position
-        // (0, 5, -1.33)
-        // (-90, 0, -180)
-
-        // var originTransformationMatrix = Matrix4x4.TRS(imageTarget.Position, imageTarget.Rotation, Vector3.one);
-        // // worldAnchor.transform.localRotation = imageTarget.Rotation * baseTransform.rotation;
-        // worldAnchor.transform.localPosition = originTransformationMatrix.MultiplyPoint3x4(baseTransform.position);
-
-        var originTransformationMatrix = Matrix4x4.TRS(imageTarget.Position, imageTarget.Rotation, Vector3.one);
-        var inv_originTransformationMatrix = originTransformationMatrix.inverse;
+        var imageTarget = ImageTargetMaster.FindItem(imageTargetName);
+        var m = Matrix4x4.TRS(imageTarget.position, imageTarget.rotation, Vector3.one).inverse;
         // Marker.transform.localPosition = originTransformationMatrix.MultiplyPoint3x4(Marker.transform.localPosition);
         // Marker.transform.localRotation = Marker.transform.rotation * imageTarget.Rotation;
 
-        worldAnchor.transform.localPosition = inv_originTransformationMatrix.MultiplyPoint3x4(worldAnchor.transform.localPosition);
-        worldAnchor.transform.rotation = worldAnchor.transform.rotation * imageTarget.Rotation;
-
+        worldAnchor.transform.localPosition = m.MultiplyPoint3x4(worldAnchor.transform.localPosition);
+        worldAnchor.transform.rotation = worldAnchor.transform.rotation * Quaternion.Inverse(imageTarget.rotation);
     }
-
-
 }

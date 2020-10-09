@@ -34,7 +34,7 @@ MonoBehaviour:
     m_Size: {x: 6.0045147, y: 2.66}
     m_SpecifySize: 1
     m_Name: PvP_Marker_3_0_4_Blue
-    m_Texture: {fileID: 2800000, guid: d6c070269853c4c529a5f3650137a2b9, type: 3}
+    m_Texture: {fileID: 0}
   - m_SerializedGuid:
       m_GuidLow: 5601266430852064239
       m_GuidHigh: 13055574521486725248
