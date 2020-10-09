@@ -9,7 +9,7 @@ public static class ImageTargetMaster
     {
         new ImageTargetTransform(
             "PvP_Marker_2_0_1_Blue",
-            new Vector3(0, 0.0133f, -0.05f),
+            new Vector3(0, 1.33f, -5f),
             Quaternion.Euler(-90f, -180, 0)
         ),
 
