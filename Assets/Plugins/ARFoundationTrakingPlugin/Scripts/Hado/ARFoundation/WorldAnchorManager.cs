@@ -39,7 +39,7 @@ namespace Hado.ARFoundation
             foreach (var trackedImage in eventArgs.added)
             {
                 // 初回だけの処理はここに
-                InitAnchorTransform(trackedImage.name, trackedImage.gameObject);
+                InitAnchorTransform(trackedImage);
                 UpdateWorldAnchor(trackedImage);
             }
 
@@ -47,24 +47,28 @@ namespace Hado.ARFoundation
                 UpdateWorldAnchor(trackedImage);
         }
 
-        void InitAnchorTransform(string imageTargetName, GameObject trackedImageObject)
+        void InitAnchorTransform(ARTrackedImage trackedImage)
         {
-            var anchor = trackedImageObject.GetComponentInChildren<Anchor>();
-            var offset = ImageTargetOffsetMaster.FindItem(imageTargetName);
+            var markerName = trackedImage.referenceImage.name;
+
+            var anchor = trackedImage.GetComponentInChildren<Anchor>();
+            var offset = ImageTargetOffsetMaster.FindItem(markerName);
             var m = Matrix4x4.TRS(offset.position, offset.rotation, Vector3.one).inverse;
 
             var t = anchor.gameObject.transform;
             t.localPosition = m.MultiplyPoint3x4(t.transform.localPosition);
             t.rotation = t.rotation * Quaternion.Inverse(offset.rotation);
 
-            _detectedAnchors.Add(imageTargetName, anchor.gameObject);
+            _detectedAnchors.Add(markerName, anchor.gameObject);
         }
 
         void UpdateWorldAnchor(ARTrackedImage trackedImage)
         {
+            var markerName = trackedImage.referenceImage.name;
+
             if (trackedImage.trackingState != TrackingState.None)
             {
-                _pm.WorldAnchor = _detectedAnchors[trackedImage.name];
+                _pm.WorldAnchor = _detectedAnchors[markerName];
             }
             else
             {

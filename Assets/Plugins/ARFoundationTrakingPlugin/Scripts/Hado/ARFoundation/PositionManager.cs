@@ -48,7 +48,7 @@ namespace Hado.ARFoundation
             }
             else
             {
-                Debug.LogError("WorldAnchor is not set yet.");
+                // Debug.LogError("WorldAnchor is not set yet.");
                 return new PosRot()
                 {
                     position = recievedPosition,
