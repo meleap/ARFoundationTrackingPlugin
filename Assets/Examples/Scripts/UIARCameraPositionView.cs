@@ -21,10 +21,13 @@ public class UIARCameraPositionView : MonoBehaviour
 
     void Update()
     {
+
         var pr = _pm.GetRelativePositionAndRotationFromWorldAnchor(arCamera.transform.position, arCamera.transform.rotation);
         _uiText.text = $"pos: ({pr.position.x:f4}, {pr.position.y:f4}, {pr.position.z:f4})\n";
 
         var ea = pr.rotation.eulerAngles;
-        _uiText.text += $"rot: ({ea.x:f4}, {ea.y:f4}, {ea.z:f4})";
+        _uiText.text += $"rot: ({ea.x:f4}, {ea.y:f4}, {ea.z:f4})\n";
+
+        _uiText.text += $"current: {_pm.CurrentAnchorName}";
     }
 }

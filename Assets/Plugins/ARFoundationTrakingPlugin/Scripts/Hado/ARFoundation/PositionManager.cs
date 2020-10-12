@@ -25,6 +25,21 @@ namespace Hado.ARFoundation
 
         public GameObject WorldAnchor { get; set; }
 
+        public string CurrentAnchorName
+        {
+            get
+            {
+                if (WorldAnchor != null)
+                {
+                    return WorldAnchor.GetComponent<Anchor>().Name;
+                }
+                else
+                {
+                    return "";
+                }
+            }
+        }
+
         public Vector3 GetCalibratedPosition(Vector3 position)
         {
             return WorldAnchor.transform.InverseTransformPoint(position);
@@ -39,11 +54,10 @@ namespace Hado.ARFoundation
         {
             if (WorldAnchor != null)
             {
-                var originTransformationMatrix = Matrix4x4.TRS(WorldAnchor.transform.position, WorldAnchor.transform.rotation, WorldAnchor.transform.localScale);
                 return new PosRot()
                 {
-                    position = originTransformationMatrix.MultiplyPoint3x4(recievedPosition),
-                    rotation = WorldAnchor.transform.rotation * recievedRotation
+                    position = GetCalibratedPosition(recievedPosition),
+                    rotation = GetCalibratedRotation(recievedRotation)
                 };
             }
             else

@@ -6,5 +6,6 @@ namespace Hado.ARFoundation
 {
     public class Anchor : MonoBehaviour
     {
+        public string Name { get; set; }
     }
 }

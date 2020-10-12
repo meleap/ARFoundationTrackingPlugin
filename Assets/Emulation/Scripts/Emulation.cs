@@ -31,7 +31,7 @@ public class Emulation : MonoBehaviour
     GameObject _arTrackableGameObject;
 
     Dictionary<string, GameObject> _createdARTrackedGameObjects = new Dictionary<string, GameObject>();
-    Dictionary<string, GameObject> _detectedARTrackedGameObjects = new Dictionary<string, GameObject>();
+    Dictionary<string, GameObject> _detectedAnchors = new Dictionary<string, GameObject>();
 
     void Awake()
     {
@@ -68,24 +68,21 @@ public class Emulation : MonoBehaviour
 
     public void DetectMarker(string imageTargetName, GameObject marker)
     {
-        // 初回認識時
-        if (!_detectedARTrackedGameObjects.ContainsKey(imageTargetName))
-        {
-            // 作らせる
-            var o = GetARTrackedGameObject(imageTargetName, marker);
-        }
+        var o = GetARTrackedGameObject(imageTargetName, marker);
+        _detectedAnchors.Add(imageTargetName, o.GetComponentInChildren<Anchor>().gameObject);
+
         // 認識中
-        _detectedARTrackedGameObjects.Add(imageTargetName, _createdARTrackedGameObjects[imageTargetName]);
+        PositionManager.Instance.WorldAnchor = _detectedAnchors[imageTargetName];
     }
 
     public void UndetectedMarker(string imageTargetName)
     {
-        _detectedARTrackedGameObjects.Remove(imageTargetName);
+        _detectedAnchors.Remove(imageTargetName);
     }
 
     void ChangeButtonStatus(string imageTargetName, Button btn)
     {
-        var isActive = !_detectedARTrackedGameObjects.ContainsKey(imageTargetName);
+        var isActive = !_detectedAnchors.ContainsKey(imageTargetName);
         btn.interactable = isActive;
     }
 
@@ -98,7 +95,7 @@ public class Emulation : MonoBehaviour
     /// <returns>GameObject</returns>
     public GameObject GetARTrackedGameObject(string imageTargetName, GameObject marker)
     {
-
+        // 初回は作る
         if (!_createdARTrackedGameObjects.ContainsKey(imageTargetName))
         {
             var go = Instantiate(_arTrackableGameObject, marker.transform.position, marker.transform.rotation);
@@ -116,6 +113,8 @@ public class Emulation : MonoBehaviour
         var trackedImageObject = _createdARTrackedGameObjects[imageTargetName];
 
         var anchor = trackedImageObject.GetComponentInChildren<Anchor>();
+        anchor.Name = imageTargetName;
+
         var offset = ImageTargetOffsetMaster.FindItem(imageTargetName);
         var m = Matrix4x4.TRS(offset.position, offset.rotation, Vector3.one).inverse;
         var t = anchor.gameObject.transform;
