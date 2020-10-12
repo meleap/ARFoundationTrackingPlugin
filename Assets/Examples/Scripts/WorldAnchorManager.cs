@@ -9,23 +9,59 @@ using UnityEngine.XR.ARFoundation;
 public class WorldAnchorManager : MonoBehaviour
 {
     [SerializeField]
-    public Text worldAnchorInfoText;
+    GameObject _arTrackableGameObject;
 
-    [SerializeField]
-    public GameObject WorldAnchor;
+    Dictionary<string, GameObject> _createdARTrackedGameObjects = new Dictionary<string, GameObject>();
+    Dictionary<string, GameObject> _detectedARTrackedGameObjects = new Dictionary<string, GameObject>();
+
+    public void DetectMarker(string imageTargetName, GameObject marker)
+    {
+        // 初回認識時
+        if (!_detectedARTrackedGameObjects.ContainsKey(imageTargetName))
+        {
+            // 作らせる
+            var o = GetARTrackedGameObject(imageTargetName, marker);
+        }
+        // 認識中
+        _detectedARTrackedGameObjects.Add(imageTargetName, _createdARTrackedGameObjects[imageTargetName]);
+    }
+
+    public void UndetectedMarker(string imageTargetName)
+    {
+        _detectedARTrackedGameObjects.Remove(imageTargetName);
+    }
+
+    public bool IsTracking(string imageTargetName)
+    {
+        return _detectedARTrackedGameObjects.ContainsKey(imageTargetName);
+    }
 
     /// <summary>
-    /// マーカーの設定から逆算してゲーム世界の中心にWorldAnchorを移動させます
+    /// ARFの挙動としてはARTrackedGameObjectは初回マーカー認識時に１回だけInstantiateされるっぽい
+    /// すでに生成済みの場合はそのまま返す
     /// </summary>
-    /// <param name="trackedImage">認識しているマーカーの情報</param>
-    public void SetOffset(ARTrackedImage trackedImage)
+    /// <param name="imageTargetName"></param>
+    /// <param name="marker"></param>
+    /// <returns>GameObject</returns>
+    public GameObject GetARTrackedGameObject(string imageTargetName, GameObject marker)
     {
-        var targetData = ImageTargetMaster.FindItem(trackedImage.referenceImage.name);
-        if (targetData == null)
-            throw new Exception("マーカーの定義情報が見つかりませんでした");
 
-        var originTransformationMatrix = Matrix4x4.TRS(targetData.position, targetData.rotation, Vector3.one).inverse;
-        WorldAnchor.transform.localPosition = originTransformationMatrix.MultiplyPoint3x4(WorldAnchor.transform.localPosition);
-        WorldAnchor.transform.rotation = WorldAnchor.transform.rotation * Quaternion.Inverse(targetData.rotation);
+        if (!_createdARTrackedGameObjects.ContainsKey(imageTargetName))
+        {
+            var go = Instantiate(_arTrackableGameObject, marker.transform.position, marker.transform.rotation);
+            _createdARTrackedGameObjects.Add(imageTargetName, go);
+            _createdARTrackedGameObjects[imageTargetName].transform.SetParent(marker.transform);
+
+            InitAnchorTransform(imageTargetName, marker);
+        }
+        return _createdARTrackedGameObjects[imageTargetName];
+    }
+
+    void InitAnchorTransform(string imageTargetName, GameObject marker)
+    {
+        var trackedImageObject = _createdARTrackedGameObjects[imageTargetName];
+        var offsetManager = trackedImageObject.GetComponent<ARTrackedImageOffsetManager>();
+        var offsetData = ImageTargetMaster.FindItem(imageTargetName);
+        offsetManager.SetAnchorTransform(offsetData);
     }
 }

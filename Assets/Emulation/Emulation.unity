@@ -1632,6 +1632,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2044563878}
   - component: {fileID: 2044563879}
+  - component: {fileID: 2044563880}
   m_Layer: 0
   m_Name: ImageTarget
   m_TagString: Untagged
@@ -1675,3 +1676,17 @@ MonoBehaviour:
   _btnBlueDetected: {fileID: 413647861}
   _btnUndetectedRed: {fileID: 1734108103}
   _btnUndetectedBlue: {fileID: 1580133630}
+--- !u!114 &2044563880
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2044563877}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e25ef0619b704b779a900929745d40c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _arTrackableGameObject: {fileID: 4606153653296870861, guid: c770464900fd24ed4a902dd8e0ac5e57,
+    type: 3}
