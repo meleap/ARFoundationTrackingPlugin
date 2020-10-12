@@ -52,6 +52,8 @@ namespace Hado.ARFoundation
             var markerName = trackedImage.referenceImage.name;
 
             var anchor = trackedImage.GetComponentInChildren<Anchor>();
+            anchor.Name = markerName;
+
             var offset = ImageTargetOffsetMaster.FindItem(markerName);
             var m = Matrix4x4.TRS(offset.position, offset.rotation, Vector3.one).inverse;
 
