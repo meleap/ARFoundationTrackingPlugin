@@ -14,6 +14,10 @@ namespace Hado.ARFoundation
 
         ARTrackedImageManager m_TrackedImageManager;
 
+        PositionManager _pm = PositionManager.Instance;
+
+        Dictionary<string, GameObject> _detectedAnchors = new Dictionary<string, GameObject>();
+
         void Awake()
         {
             m_TrackedImageManager = GetComponent<ARTrackedImageManager>();
@@ -36,12 +40,11 @@ namespace Hado.ARFoundation
             {
                 // 初回だけの処理はここに
                 InitAnchorTransform(trackedImage.name, trackedImage.gameObject);
+                UpdateWorldAnchor(trackedImage);
             }
 
             foreach (var trackedImage in eventArgs.updated)
-            {
-                // UpdateInfo(trackedImage);
-            }
+                UpdateWorldAnchor(trackedImage);
         }
 
         void InitAnchorTransform(string imageTargetName, GameObject trackedImageObject)
@@ -53,6 +56,20 @@ namespace Hado.ARFoundation
             var t = anchor.gameObject.transform;
             t.localPosition = m.MultiplyPoint3x4(t.transform.localPosition);
             t.rotation = t.rotation * Quaternion.Inverse(offset.rotation);
+
+            _detectedAnchors.Add(imageTargetName, anchor.gameObject);
+        }
+
+        void UpdateWorldAnchor(ARTrackedImage trackedImage)
+        {
+            if (trackedImage.trackingState != TrackingState.None)
+            {
+                _pm.WorldAnchor = _detectedAnchors[trackedImage.name];
+            }
+            else
+            {
+                // マーカー外した時になにかするならここ
+            }
         }
     }
 }
