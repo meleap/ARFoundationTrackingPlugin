@@ -5,7 +5,7 @@ using UnityEngine;
 public class Test : MonoBehaviour
 {
     [SerializeField]
-    GameObject worldAnchor;
+    GameObject ARTrackableGameObject;
 
     [SerializeField]
     GameObject BlueMarker;
@@ -13,24 +13,38 @@ public class Test : MonoBehaviour
     [SerializeField]
     GameObject RedMarker;
 
-    void Start()
+    Dictionary<string, GameObject> _detectedARTrackedGameObjects = new Dictionary<string, GameObject>();
+
+    public void DetectedRed()
     {
-        SetMarker("PvP_Marker_2_0_1_Blue", BlueMarker);
-        //SetMarker("PvP_Marker_3_0_4_Red", RedMarker);
+        var imageTargetName = "PvP_Marker_3_0_4_Red";
+        CreateARTrackedGameObject(imageTargetName, RedMarker);
     }
 
-    void SetMarker(string imageTargetName, GameObject marker)
+    public void DetectedBlue()
     {
-        worldAnchor.transform.SetParent(marker.transform);
-        worldAnchor.transform.localPosition = Vector3.zero;
-        worldAnchor.transform.localRotation = Quaternion.identity;
+        var imageTargetName = "PvP_Marker_2_0_1_Blue";
+        CreateARTrackedGameObject(imageTargetName, BlueMarker);
+    }
 
-        var imageTarget = ImageTargetMaster.FindItem(imageTargetName);
-        var m = Matrix4x4.TRS(imageTarget.position, imageTarget.rotation, Vector3.one).inverse;
-        // Marker.transform.localPosition = originTransformationMatrix.MultiplyPoint3x4(Marker.transform.localPosition);
-        // Marker.transform.localRotation = Marker.transform.rotation * imageTarget.Rotation;
+    void CreateARTrackedGameObject(string imageTargetName, GameObject marker)
+    {
+        // ARFの挙動としてはARTrackedGameObjectは初回マーカー認識時に１回だけInstantiateされるっぽいので
+        if (!_detectedARTrackedGameObjects.ContainsKey(imageTargetName))
+        {
+            var go = Instantiate(ARTrackableGameObject, marker.transform.position, marker.transform.rotation);
+            _detectedARTrackedGameObjects.Add(imageTargetName, go);
+            _detectedARTrackedGameObjects[imageTargetName].transform.SetParent(marker.transform);
 
-        worldAnchor.transform.localPosition = m.MultiplyPoint3x4(worldAnchor.transform.localPosition);
-        worldAnchor.transform.rotation = worldAnchor.transform.rotation * Quaternion.Inverse(imageTarget.rotation);
+            SetAnchorTransform(imageTargetName, marker);
+        }
+    }
+
+    void SetAnchorTransform(string imageTargetName, GameObject marker)
+    {
+        var trackedImageObject = _detectedARTrackedGameObjects[imageTargetName];
+        var offsetManager = trackedImageObject.GetComponent<ARTrackedImageOffsetManager>();
+        var offsetData = ImageTargetMaster.FindItem(imageTargetName);
+        offsetManager.SetAnchorTransform(offsetData);
     }
 }
