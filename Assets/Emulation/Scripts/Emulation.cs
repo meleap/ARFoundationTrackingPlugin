@@ -111,9 +111,10 @@ public class Emulation : MonoBehaviour
 
     void InitAnchorTransform(string imageTargetName, GameObject marker)
     {
+        ImageTargetOffsetMaster.ImageTargets = ImageTargetOffsetSampleData.ImageTargets;
         var trackedImageObject = _createdARTrackedGameObjects[imageTargetName];
         var offsetManager = trackedImageObject.GetComponent<ARTrackedImageOffsetManager>();
-        var offsetData = ImageTargetMaster.FindItem(imageTargetName);
+        var offsetData = ImageTargetOffsetMaster.FindItem(imageTargetName);
         offsetManager.SetAnchorTransform(offsetData);
     }
 }
