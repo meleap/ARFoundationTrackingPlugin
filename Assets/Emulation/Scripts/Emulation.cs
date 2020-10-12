@@ -27,7 +27,10 @@ public class Emulation : MonoBehaviour
     readonly string imageTargetNameBlue = "PvP_Marker_2_0_1_Blue";
 
     [SerializeField]
-    WorldAnchorManager _worldAnchorManager;
+    GameObject _arTrackableGameObject;
+
+    Dictionary<string, GameObject> _createdARTrackedGameObjects = new Dictionary<string, GameObject>();
+    Dictionary<string, GameObject> _detectedARTrackedGameObjects = new Dictionary<string, GameObject>();
 
     void Awake()
     {
@@ -36,37 +39,81 @@ public class Emulation : MonoBehaviour
 
         _btnUndetectedRed.onClick.AddListener(UndetectedRed);
         _btnUndetectedBlue.onClick.AddListener(UndetectedBlue);
-
-        _worldAnchorManager = GetComponent<WorldAnchorManager>();
     }
 
     public void DetectedRed()
     {
-        _worldAnchorManager.DetectMarker(imageTargetNameRed, _redMarker);
+        DetectMarker(imageTargetNameRed, _redMarker);
         ChangeButtonStatus(imageTargetNameRed, _btnRedDetected);
     }
 
     public void DetectedBlue()
     {
-        _worldAnchorManager.DetectMarker(imageTargetNameBlue, _blueMarker);
+        DetectMarker(imageTargetNameBlue, _blueMarker);
         ChangeButtonStatus(imageTargetNameBlue, _btnBlueDetected);
     }
 
     public void UndetectedRed()
     {
-        _worldAnchorManager.UndetectedMarker(imageTargetNameRed);
+        UndetectedMarker(imageTargetNameRed);
         ChangeButtonStatus(imageTargetNameRed, _btnRedDetected);
     }
 
     public void UndetectedBlue()
     {
-        _worldAnchorManager.UndetectedMarker(imageTargetNameBlue);
+        UndetectedMarker(imageTargetNameBlue);
         ChangeButtonStatus(imageTargetNameBlue, _btnBlueDetected);
+    }
+
+    public void DetectMarker(string imageTargetName, GameObject marker)
+    {
+        // 初回認識時
+        if (!_detectedARTrackedGameObjects.ContainsKey(imageTargetName))
+        {
+            // 作らせる
+            var o = GetARTrackedGameObject(imageTargetName, marker);
+        }
+        // 認識中
+        _detectedARTrackedGameObjects.Add(imageTargetName, _createdARTrackedGameObjects[imageTargetName]);
+    }
+
+    public void UndetectedMarker(string imageTargetName)
+    {
+        _detectedARTrackedGameObjects.Remove(imageTargetName);
     }
 
     void ChangeButtonStatus(string imageTargetName, Button btn)
     {
-        var isActive = !_worldAnchorManager.IsTracking(imageTargetName);
+        var isActive = !_detectedARTrackedGameObjects.ContainsKey(imageTargetName);
         btn.interactable = isActive;
+    }
+
+    /// <summary>
+    /// ARFの挙動としてはARTrackedGameObjectは初回マーカー認識時に１回だけInstantiateされるっぽい
+    /// すでに生成済みの場合はそのまま返す
+    /// </summary>
+    /// <param name="imageTargetName"></param>
+    /// <param name="marker"></param>
+    /// <returns>GameObject</returns>
+    public GameObject GetARTrackedGameObject(string imageTargetName, GameObject marker)
+    {
+
+        if (!_createdARTrackedGameObjects.ContainsKey(imageTargetName))
+        {
+            var go = Instantiate(_arTrackableGameObject, marker.transform.position, marker.transform.rotation);
+            _createdARTrackedGameObjects.Add(imageTargetName, go);
+            _createdARTrackedGameObjects[imageTargetName].transform.SetParent(marker.transform);
+
+            InitAnchorTransform(imageTargetName, marker);
+        }
+        return _createdARTrackedGameObjects[imageTargetName];
+    }
+
+    void InitAnchorTransform(string imageTargetName, GameObject marker)
+    {
+        var trackedImageObject = _createdARTrackedGameObjects[imageTargetName];
+        var offsetManager = trackedImageObject.GetComponent<ARTrackedImageOffsetManager>();
+        var offsetData = ImageTargetMaster.FindItem(imageTargetName);
+        offsetManager.SetAnchorTransform(offsetData);
     }
 }
