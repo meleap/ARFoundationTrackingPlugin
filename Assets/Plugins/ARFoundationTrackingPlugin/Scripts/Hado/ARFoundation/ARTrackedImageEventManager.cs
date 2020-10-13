@@ -5,18 +5,34 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.XR.ARSubsystems;
 using UnityEngine.XR.ARFoundation;
+using UniRx;
 
 namespace Hado.ARFoundation
 {
     [RequireComponent(typeof(ARTrackedImageManager))]
-    public class WorldAnchorManager : MonoBehaviour
+    public class ARTrackedImageEventManager : MonoBehaviour
     {
+        Subject<ARTrackedImage> _trackImagesChangedSubject = new Subject<ARTrackedImage>();
+
+        public IObservable<ARTrackedImage> OnTrackedImagesChangedObservable
+        {
+            get
+            {
+                return _trackImagesChangedSubject.AsObservable();
+            }
+        }
 
         ARTrackedImageManager m_TrackedImageManager;
 
-        PositionManager _pm = PositionManager.Instance;
+        Dictionary<string, GameObject> _detectedReferenceAnchors = new Dictionary<string, GameObject>();
 
-        Dictionary<string, GameObject> _detectedAnchors = new Dictionary<string, GameObject>();
+        public GameObject GetReferenceAnchor(string imageName)
+        {
+            if (!_detectedReferenceAnchors.ContainsKey(imageName))
+                throw new Exception("一度も認識していないか、存在しないマーカーです");
+
+            return _detectedReferenceAnchors[imageName];
+        }
 
         void Awake()
         {
@@ -40,20 +56,18 @@ namespace Hado.ARFoundation
             {
                 // 初回だけの処理はここに
                 InitAnchorTransform(trackedImage);
-                UpdateWorldAnchor(trackedImage);
+                _trackImagesChangedSubject.OnNext(trackedImage);
             }
 
             foreach (var trackedImage in eventArgs.updated)
-                UpdateWorldAnchor(trackedImage);
+                _trackImagesChangedSubject.OnNext(trackedImage);
         }
 
         void InitAnchorTransform(ARTrackedImage trackedImage)
         {
             var markerName = trackedImage.referenceImage.name;
-
             var anchor = trackedImage.GetComponentInChildren<Anchor>();
             anchor.Name = markerName;
-
             var offset = ImageTargetOffsetMaster.FindItem(markerName);
             var m = Matrix4x4.TRS(offset.position, offset.rotation, Vector3.one).inverse;
 
@@ -61,21 +75,7 @@ namespace Hado.ARFoundation
             t.localPosition = m.MultiplyPoint3x4(t.transform.localPosition);
             t.rotation = t.rotation * Quaternion.Inverse(offset.rotation);
 
-            _detectedAnchors.Add(markerName, anchor.gameObject);
-        }
-
-        void UpdateWorldAnchor(ARTrackedImage trackedImage)
-        {
-            var markerName = trackedImage.referenceImage.name;
-
-            if (trackedImage.trackingState != TrackingState.None)
-            {
-                _pm.WorldAnchor = _detectedAnchors[markerName];
-            }
-            else
-            {
-                // マーカー外した時になにかするならここ
-            }
+            _detectedReferenceAnchors.Add(markerName, anchor.gameObject);
         }
     }
 }
