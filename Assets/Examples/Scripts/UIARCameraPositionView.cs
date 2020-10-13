@@ -28,6 +28,6 @@ public class UIARCameraPositionView : MonoBehaviour
         var ea = pr.rotation.eulerAngles;
         _uiText.text += $"rot: ({ea.x:f4}, {ea.y:f4}, {ea.z:f4})\n";
 
-        _uiText.text += $"current: {_pm.CurrentAnchorName}";
+        _uiText.text += $"current: {_pm.LastDetectedAnchorName}";
     }
 }

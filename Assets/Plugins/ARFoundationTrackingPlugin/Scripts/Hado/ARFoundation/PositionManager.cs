@@ -25,20 +25,8 @@ namespace Hado.ARFoundation
 
         public GameObject WorldAnchor { get; set; }
 
-        public string CurrentAnchorName
-        {
-            get
-            {
-                if (WorldAnchor != null)
-                {
-                    return WorldAnchor.GetComponent<Anchor>().Name;
-                }
-                else
-                {
-                    return "";
-                }
-            }
-        }
+        public string LastDetectedAnchorName { get; set; }
+
 
         public Vector3 GetCalibratedPosition(Vector3 position)
         {
