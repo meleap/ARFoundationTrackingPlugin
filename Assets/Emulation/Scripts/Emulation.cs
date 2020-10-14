@@ -118,7 +118,7 @@ public class Emulation : MonoBehaviour
         var offset = ImageTargetOffsetMaster.FindItem(imageTargetName);
         var m = Matrix4x4.TRS(offset.position, offset.rotation, Vector3.one).inverse;
         var t = anchor.gameObject.transform;
-        t.localPosition = m.MultiplyPoint3x4(t.transform.localPosition);
+        t.localPosition = m.MultiplyPoint3x4(t.localPosition);
         t.rotation = t.rotation * Quaternion.Inverse(offset.rotation);
     }
 }
