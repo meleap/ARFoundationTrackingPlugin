@@ -1,8 +1,8 @@
 {
-    "name": "com.meleap.arfoundationtrackingplugin",
+    "name": "com.meleap.unity.arfoundationtrackingplugin",
     "displayName": "ARFoundationTrackingPlugin",
     "description": "ARFoundation Tracking Plugin",
-    "version": "1.0.3",
-    "unity": "2018.4",
+    "version": "1.1.0",
+    "unity": "2019.4",
     "dependencies": {}
 }
