@@ -16,10 +16,7 @@ namespace Hado.ARFoundation
 
         public IObservable<ARTrackedImage> OnTrackedImagesChangedObservable
         {
-            get
-            {
-                return _trackImagesChangedSubject.AsObservable();
-            }
+            get { return _trackImagesChangedSubject.AsObservable(); }
         }
 
         ARTrackedImageManager m_TrackedImageManager;
@@ -41,11 +38,13 @@ namespace Hado.ARFoundation
 
         void OnEnable()
         {
+            Debug.Log("Register trackedImagesChanged event: OnTrackedImagesChanged");
             m_TrackedImageManager.trackedImagesChanged += OnTrackedImagesChanged;
         }
 
         void OnDisable()
         {
+            Debug.Log("Unregister trackedImagesChanged event: OnTrackedImagesChanged");
             m_TrackedImageManager.trackedImagesChanged -= OnTrackedImagesChanged;
         }
 
@@ -60,11 +59,15 @@ namespace Hado.ARFoundation
             }
 
             foreach (var trackedImage in eventArgs.updated)
+            {
+                Debug.Log($"OnTrackedImagesChanged: updated: {trackedImage.trackingState}");
                 _trackImagesChangedSubject.OnNext(trackedImage);
+            }
         }
 
         void InitAnchorTransform(ARTrackedImage trackedImage)
         {
+            Debug.Log("InitAnchorTransform");
             var markerName = trackedImage.referenceImage.name;
             var anchor = trackedImage.GetComponentInChildren<Anchor>();
             anchor.Name = markerName;
