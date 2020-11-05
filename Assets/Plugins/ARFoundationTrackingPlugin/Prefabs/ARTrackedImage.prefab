@@ -75,6 +75,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 763dcb69fbf524160bdd33c2c0d8b766, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _debugObjects:
+  - {fileID: 8285376808190339775}
 --- !u!1001 &7688857401999815292
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -86,6 +88,16 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: Arrow
+      objectReference: {fileID: 0}
+    - target: {fileID: 1751862179971537091, guid: b4b54742686a9488b81a301b7c69c4dd,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7718286253875484722, guid: b4b54742686a9488b81a301b7c69c4dd,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8779632642362848953, guid: b4b54742686a9488b81a301b7c69c4dd,
         type: 3}
@@ -144,6 +156,12 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b4b54742686a9488b81a301b7c69c4dd, type: 3}
+--- !u!1 &8285376808190339775 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1751862179971537091, guid: b4b54742686a9488b81a301b7c69c4dd,
+    type: 3}
+  m_PrefabInstance: {fileID: 7688857401999815292}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1397182749875553477 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8779632642362848953, guid: b4b54742686a9488b81a301b7c69c4dd,
