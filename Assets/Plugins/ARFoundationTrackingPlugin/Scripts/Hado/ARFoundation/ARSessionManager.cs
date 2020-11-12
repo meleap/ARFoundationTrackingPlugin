@@ -21,35 +21,40 @@ namespace Hado.ARFoundation
 
         public Camera arCamera;
 
-        private IFocusEvent _focusEvent = null;
-        
         public static ARSessionManager Instance { get; } = new ARSessionManager();
 
         public void Init(GameObject go)
         {
             FindObjectsAndComponents(go);
-            PowerOff();
+            arCamera.enabled = false;
+            _arSessionManagerGameObject.SetActive(true);
         }
 
         public void PowerOff()
         {
+            AutoFocusRequested = false;
             arCamera.enabled = false;
-            _arSessionManagerGameObject.SetActive(false);
-            
-            _focusEvent?.Dispose();
+
+            Observable.Timer(TimeSpan.FromMilliseconds(1000))
+                .Subscribe(_ =>
+                {
+                    _arSession.enabled = false;
+                });
         }
 
-        public void PowerOn(bool enableCamera = true, bool autoFocus = false, IFocusEvent focusEvent = null)
+        public void PowerOn(bool enableCamera = true, bool autoFocus = false)
         {
-            _arSessionManagerGameObject.SetActive(true);
             
             if (enableCamera)
                 arCamera.enabled = true;
 
-            AutoFocusRequested = autoFocus;
-
-            _focusEvent = focusEvent;
-            _focusEvent?.RegisterEvent();
+            _arSession.enabled = true;
+            
+            Observable.Timer(TimeSpan.FromMilliseconds(1000))
+                .Subscribe(_ =>
+                {
+                    AutoFocusRequested = autoFocus;
+                });
         }
 
         public bool AutoFocusRequested
