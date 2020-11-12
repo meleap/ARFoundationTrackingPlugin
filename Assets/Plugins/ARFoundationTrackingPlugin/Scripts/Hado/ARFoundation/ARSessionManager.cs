@@ -1,24 +1,97 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+using Hado.ARFoundation;
+using UniRx;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
+using UnityEngine.XR.ARSubsystems;
 
 namespace Hado.ARFoundation
 {
-    public class ARSessionManager : MonoBehaviour
+    public class ARSessionManager
     {
-        private ARSession _arSession;
+        private GameObject _arSessionManagerGameObject;
+        private GameObject _arSessionOriginGameObject;
+        private GameObject _arSessionGameObject;
 
-        private void Start()
+        private ARCameraManager _arCameraManager;
+        private ARSession _arSession;
+        private ARInputManager _arInputManager;
+        
+        public ARTrackedImageEventManager arTrackedImageEventManager;
+
+        public Camera arCamera;
+
+        private IFocusEvent _focusEvent = null;
+        
+        public static ARSessionManager Instance { get; } = new ARSessionManager();
+
+        public void Init(GameObject go)
         {
-            _arSession = GetComponent<ARSession>();
+            FindObjectsAndComponents(go);
+            PowerOff();
         }
 
-        private void OnDisable()
+        public void PowerOff()
         {
-            Debug.Log("Reset ARSession");
-            _arSession.Reset();
+            arCamera.enabled = false;
+            _arSessionManagerGameObject.SetActive(false);
+            
+            _focusEvent?.Dispose();
+        }
+
+        public void PowerOn(bool enableCamera = true, bool autoFocus = false, IFocusEvent focusEvent = null)
+        {
+            _arSessionManagerGameObject.SetActive(true);
+            
+            if (enableCamera)
+                arCamera.enabled = true;
+
+            AutoFocusRequested = autoFocus;
+
+            _focusEvent = focusEvent;
+            _focusEvent?.RegisterEvent();
+        }
+
+        public bool AutoFocusRequested
+        {
+            set => _arCameraManager.autoFocusRequested = value;
+        }
+
+        public bool EnabledPositionTracking
+        {
+            set => _arInputManager.enabled = value;
+        }
+
+        private void FindObjectsAndComponents(GameObject go)
+        {
+            _arSessionManagerGameObject = go;
+            _arSessionOriginGameObject = go.transform.Find("AR Session Origin").gameObject;
+            _arSessionGameObject = go.transform.Find("AR Session").gameObject;
+
+            _arCameraManager = _arSessionManagerGameObject.GetComponentInChildren<ARCameraManager>();
+            _arSession = _arSessionManagerGameObject.GetComponentInChildren<ARSession>();
+            _arInputManager = _arSessionManagerGameObject.GetComponentInChildren<ARInputManager>();
+            arTrackedImageEventManager = _arSessionManagerGameObject.GetComponentInChildren<ARTrackedImageEventManager>();
+            
+            arCamera = _arSessionManagerGameObject.GetComponentInChildren<Camera>();
+
+
+            if (_arSessionOriginGameObject == null)
+                throw new Exception("GameObject AR Session Origin not found.");
+            if (_arSessionGameObject == null)
+                throw new Exception("GameObject AR Session not found.");
+
+            if (_arCameraManager == null)
+                throw new Exception("ARCameraManager not found.");
+
+            if (_arSession == null)
+                throw new Exception("ARSession not found.");
+
+            if (_arInputManager == null)
+                throw new Exception("ARInputManager not found.");
+
+            if (arCamera == null)
+                throw new Exception("Camera not found.");
         }
     }
 }

@@ -8,9 +8,6 @@ namespace Hado.ARFoundation
 {
     public class WorldAnchorManager : MonoBehaviour
     {
-        [SerializeField]
-        ARTrackedImageEventManager _trackedImageEventManager = null;
-
         void Awake()
         {
             PositionManager.Instance.WorldAnchor = this.gameObject;
@@ -18,13 +15,14 @@ namespace Hado.ARFoundation
 
         void Start()
         {
-            _trackedImageEventManager.OnTrackedImagesChangedObservable
+            ARSessionManager.Instance.arTrackedImageEventManager.OnTrackedImagesChangedObservable
                 .Where(t => t.trackingState != TrackingState.None)
                 .Subscribe(t =>
                 {
                     // TODO: この処理をリニアではなくなんらかのスムージング入れると体感が良くなりそう
                     // TODO: 今認識してる1つのマーカーの情報だけで補正してるので、もっと頭いいロジックにしたい
-                    var anchor = _trackedImageEventManager.GetReferenceAnchor(t.referenceImage.name);
+                    var anchor =
+                        ARSessionManager.Instance.arTrackedImageEventManager.GetReferenceAnchor(t.referenceImage.name);
                     PositionManager.Instance.WorldAnchor.transform.SetPositionAndRotation(
                         anchor.transform.position,
                         anchor.transform.rotation
