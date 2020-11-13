@@ -34,6 +34,7 @@ public class UIARCameraPositionView : MonoBehaviour
 
     public void OnPressBack()
     {
+        Debug.Log("===Back===");
         ARSessionManager.Instance.PowerOff();
         SceneManager.LoadScene("Ready", LoadSceneMode.Single);
     }
