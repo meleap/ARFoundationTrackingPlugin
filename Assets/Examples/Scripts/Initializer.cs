@@ -10,6 +10,7 @@ public class Initializer : MonoBehaviour
     
     void Awake()
     {
+        Debug.Log("===Init===");
         DontDestroyOnLoad(ARSessionManagerGameObject);
         ARSessionManager.Instance.Init(ARSessionManagerGameObject);
 
