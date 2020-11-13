@@ -48,6 +48,8 @@ namespace Hado.ARFoundation
             if (enableCamera)
                 arCamera.enabled = true;
 
+            _arCameraManager.enabled = true;
+            _arInputManager.enabled = true;
             _arSession.enabled = true;
             
             Observable.NextFrame()
