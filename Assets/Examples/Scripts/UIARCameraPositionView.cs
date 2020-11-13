@@ -39,23 +39,18 @@ public class UIARCameraPositionView : MonoBehaviour
         SceneManager.LoadScene("Ready", LoadSceneMode.Single);
     }
 
-    public void OnPressDisableARTracking()
+    public void ChangePositionTrackingState(bool state)
     {
-        ARSessionManager.Instance.EnabledPositionTracking = false;
+        ARSessionManager.Instance.EnabledPositionTracking = state;
     }
     
-    public void OnPressEnableARTracking()
+    public void ChangeAutoFocusState(bool state)
     {
-        ARSessionManager.Instance.EnabledPositionTracking = true;
+        ARSessionManager.Instance.AutoFocusRequested = state;
     }
 
-    public void OnPressEnableAutoFocus()
+    public void ChangeImageTrackingState(bool state)
     {
-        ARSessionManager.Instance.AutoFocusRequested = true;
-    }
-
-    public void OnPressDisableAutoFocus()
-    {
-        ARSessionManager.Instance.AutoFocusRequested = false;
+        ARSessionManager.Instance.EnabledImageTracking = state;
     }
 }
