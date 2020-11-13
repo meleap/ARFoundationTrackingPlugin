@@ -52,6 +52,7 @@ namespace Hado.ARFoundation
             _arCameraManager.enabled = true;
             _arInputManager.enabled = true;
             _arSession.enabled = true;
+            EnabledPositionTracking = true;
             
             Observable.NextFrame()
                 .Subscribe(_ =>
