@@ -35,7 +35,7 @@ namespace Hado.ARFoundation
             AutoFocusRequested = false;
             arCamera.enabled = false;
 
-            Observable.Timer(TimeSpan.FromMilliseconds(1000))
+            Observable.NextFrame()
                 .Subscribe(_ =>
                 {
                     _arSession.enabled = false;
@@ -50,7 +50,7 @@ namespace Hado.ARFoundation
 
             _arSession.enabled = true;
             
-            Observable.Timer(TimeSpan.FromMilliseconds(1000))
+            Observable.NextFrame()
                 .Subscribe(_ =>
                 {
                     AutoFocusRequested = autoFocus;
