@@ -16,6 +16,7 @@ namespace Hado.ARFoundation
         private ARCameraManager _arCameraManager;
         private ARSession _arSession;
         private ARInputManager _arInputManager;
+        private ARTrackedImageManager _arTrackedImageManager;
         
         public ARTrackedImageEventManager arTrackedImageEventManager;
 
@@ -69,6 +70,11 @@ namespace Hado.ARFoundation
             set => _arInputManager.enabled = value;
         }
 
+        public bool EnabledImageTracking
+        {
+            set => _arTrackedImageManager.enabled = value;
+        }
+
         private void FindObjectsAndComponents(GameObject go)
         {
             _arSessionManagerGameObject = go;
@@ -78,6 +84,7 @@ namespace Hado.ARFoundation
             _arCameraManager = _arSessionManagerGameObject.GetComponentInChildren<ARCameraManager>();
             _arSession = _arSessionManagerGameObject.GetComponentInChildren<ARSession>();
             _arInputManager = _arSessionManagerGameObject.GetComponentInChildren<ARInputManager>();
+            _arTrackedImageManager = _arSessionManagerGameObject.GetComponentInChildren<ARTrackedImageManager>();
             arTrackedImageEventManager = _arSessionManagerGameObject.GetComponentInChildren<ARTrackedImageEventManager>();
             
             arCamera = _arSessionManagerGameObject.GetComponentInChildren<Camera>();
@@ -96,6 +103,9 @@ namespace Hado.ARFoundation
 
             if (_arInputManager == null)
                 throw new Exception("ARInputManager not found.");
+            
+            if(_arTrackedImageManager == null)
+                throw new Exception("ARTrackedImageManager not found.");
 
             if (arCamera == null)
                 throw new Exception("Camera not found.");
