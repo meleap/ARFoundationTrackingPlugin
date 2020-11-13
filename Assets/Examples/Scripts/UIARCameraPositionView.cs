@@ -38,4 +38,24 @@ public class UIARCameraPositionView : MonoBehaviour
         ARSessionManager.Instance.PowerOff();
         SceneManager.LoadScene("Ready", LoadSceneMode.Single);
     }
+
+    public void OnPressDisableARTracking()
+    {
+        ARSessionManager.Instance.EnabledPositionTracking = false;
+    }
+    
+    public void OnPressEnableARTracking()
+    {
+        ARSessionManager.Instance.EnabledPositionTracking = true;
+    }
+
+    public void OnPressEnableAutoFocus()
+    {
+        ARSessionManager.Instance.AutoFocusRequested = true;
+    }
+
+    public void OnPressDisableAutoFocus()
+    {
+        ARSessionManager.Instance.AutoFocusRequested = false;
+    }
 }
