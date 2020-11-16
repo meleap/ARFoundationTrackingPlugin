@@ -39,18 +39,4 @@ public class UIARCameraPositionView : MonoBehaviour
         SceneManager.LoadScene("Ready", LoadSceneMode.Single);
     }
 
-    public void ChangePositionTrackingState(bool state)
-    {
-        ARSessionManager.Instance.EnabledPositionTracking = state;
-    }
-    
-    public void ChangeAutoFocusState(bool state)
-    {
-        ARSessionManager.Instance.AutoFocusRequested = state;
-    }
-
-    public void ChangeImageTrackingState(bool state)
-    {
-        ARSessionManager.Instance.EnabledImageTracking = state;
-    }
 }
