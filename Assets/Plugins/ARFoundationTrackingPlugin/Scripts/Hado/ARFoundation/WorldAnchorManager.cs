@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UniRx;
 using UnityEngine.XR.ARSubsystems;
@@ -8,6 +9,8 @@ namespace Hado.ARFoundation
 {
     public class WorldAnchorManager : MonoBehaviour
     {
+        [SerializeField] public string[] IgnoreMarkerNames = null;
+        
         void Awake()
         {
             PositionManager.Instance.WorldAnchor = this.gameObject;
@@ -17,6 +20,7 @@ namespace Hado.ARFoundation
         {
             ARSessionManager.Instance.arTrackedImageEventManager.OnTrackedImagesChangedObservable
                 .Where(t => t.trackingState != TrackingState.None)
+                .Where(t => !IgnoreMarkerNames.Contains(t.referenceImage.name))
                 .Subscribe(t =>
                 {
                     // TODO: この処理をリニアではなくなんらかのスムージング入れると体感が良くなりそう
