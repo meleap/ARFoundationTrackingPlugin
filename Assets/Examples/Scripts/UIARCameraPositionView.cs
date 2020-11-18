@@ -24,7 +24,7 @@ public class UIARCameraPositionView : MonoBehaviour
     {
 
         var pr = _pm.GetRelativePositionAndRotationFromWorldAnchor(_arCamera.position, _arCamera.rotation);
-        _uiText.text = $"pos: ({pr.position.x:f4}, {pr.position.y:f4}, {pr.position.z:f4})\n";
+        _uiText.text = $"pos: ({pr.position.x:f4}, {pr.position.y:f4}, {pr.position.z:f4}) - ";
 
         var ea = pr.rotation.eulerAngles;
         _uiText.text += $"rot: ({ea.x:f4}, {ea.y:f4}, {ea.z:f4})\n";
