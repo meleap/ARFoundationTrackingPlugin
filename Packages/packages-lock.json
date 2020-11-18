@@ -1,5 +1,12 @@
 {
   "dependencies": {
+    "com.meleap.unity.unitystereocameramanager": {
+      "version": "https://github.com/meleap/UnityStereoCameraManager.git?path=UnityStereoCameraManager/Assets/Plugins/StereoCameraManager#1.1.3",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "00d2063637d11c2cbbda9ce86ddd6a40f20c5a8c"
+    },
     "com.unity.2d.sprite": {
       "version": "1.0.0",
       "depth": 0,
