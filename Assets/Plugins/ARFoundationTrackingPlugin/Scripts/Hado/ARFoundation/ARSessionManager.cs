@@ -24,11 +24,16 @@ namespace Hado.ARFoundation
 
         public static ARSessionManager Instance { get; } = new ARSessionManager();
 
+        private const string DummyBlackCanvasName = "DummyBlackCanvas";
+        private GameObject _dummyBlackCanvas;
+
         public void Init(GameObject go)
         {
             FindObjectsAndComponents(go);
             arCamera.enabled = false;
             _arSessionManagerGameObject.SetActive(true);
+
+            _dummyBlackCanvas = Resources.Load<GameObject>(DummyBlackCanvasName);
         }
 
         public void PowerOff()
@@ -45,10 +50,12 @@ namespace Hado.ARFoundation
 
         public void PowerOn(bool enableCamera = true, bool autoFocus = false)
         {
+
+            var ui = GameObject.Instantiate(_dummyBlackCanvas, arCamera.transform);
             
             if (enableCamera)
                 arCamera.enabled = true;
-
+            
             _arCameraManager.enabled = true;
             _arSession.enabled = true;
             EnabledPositionTracking = true;
@@ -58,6 +65,13 @@ namespace Hado.ARFoundation
                 .Subscribe(_ =>
                 {
                     AutoFocusRequested = autoFocus;
+                    
+                });
+
+            Observable.Timer(TimeSpan.FromMilliseconds(1000))
+                .Subscribe(_ =>
+                {
+                    GameObject.Destroy(ui);
                 });
         }
 
