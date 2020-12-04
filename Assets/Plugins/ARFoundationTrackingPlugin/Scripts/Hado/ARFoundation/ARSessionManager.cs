@@ -40,6 +40,8 @@ namespace Hado.ARFoundation
         {
             AutoFocusRequested = false;
             arCamera.enabled = false;
+            EnabledPositionTracking = false;
+            EnabledImageTracking = false;
 
             Observable.NextFrame()
                 .Subscribe(_ =>
@@ -50,16 +52,16 @@ namespace Hado.ARFoundation
 
         public void PowerOn(bool enableCamera = true, bool autoFocus = false)
         {
-
+            // ARCameraを起動したときに前回のラストフレームが一瞬描写される。それを隠すための黒キャンバス
             var ui = GameObject.Instantiate(_dummyBlackCanvas, arCamera.transform);
             
             if (enableCamera)
                 arCamera.enabled = true;
             
             _arCameraManager.enabled = true;
-            _arSession.enabled = true;
             EnabledPositionTracking = true;
             EnabledImageTracking = true;
+            _arSession.enabled = true;
             
             Observable.NextFrame()
                 .Subscribe(_ =>
@@ -87,7 +89,17 @@ namespace Hado.ARFoundation
 
         public bool EnabledImageTracking
         {
-            set => _arTrackedImageManager.enabled = value;
+            set
+            {
+                if (ImageTargetOffsetMaster.ImageTargets != null)
+                {
+                    _arTrackedImageManager.enabled = value;
+                }
+                else
+                {
+                    Debug.LogError("ImageTargetOffsetMaster.ImageTargets has no data");
+                }
+            }
         }
 
         private void FindObjectsAndComponents(GameObject go)
