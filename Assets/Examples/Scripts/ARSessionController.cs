@@ -8,13 +8,13 @@ using Hado.ARFoundation;
 public class ARSessionController : MonoBehaviour
 {
     [SerializeField] private XRReferenceImageLibrary markerLibrary;
-    
-    
+
+
     public void ChangePositionTrackingState(bool state)
     {
         ARSessionManager.Instance.EnabledPositionTracking = state;
     }
-    
+
     public void ChangeAutoFocusState(bool state)
     {
         ARSessionManager.Instance.AutoFocusRequested = state;
@@ -34,7 +34,7 @@ public class ARSessionController : MonoBehaviour
     {
         IgnoreMarkers("blue");
     }
-    
+
     private void IgnoreMarkers(string ignoreWord)
     {
         var list = new List<string>();
@@ -47,5 +47,17 @@ public class ARSessionController : MonoBehaviour
         }
 
         PositionManager.Instance.WorldAnchor.GetComponent<WorldAnchorManager>().IgnoreMarkerNames = list.ToArray();
+    }
+
+    public void Power(bool IsOn)
+    {
+        if (IsOn)
+        {
+            ARSessionManager.Instance.PowerOn();
+        }
+        else
+        {
+            ARSessionManager.Instance.PowerOff();
+        }
     }
 }
