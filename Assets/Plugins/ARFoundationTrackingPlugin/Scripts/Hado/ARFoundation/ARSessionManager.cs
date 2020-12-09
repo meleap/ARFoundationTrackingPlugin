@@ -1,9 +1,8 @@
 ﻿using System;
-using Hado.ARFoundation;
 using UniRx;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
-using UnityEngine.XR.ARSubsystems;
+using Cysharp.Threading.Tasks;
 
 namespace Hado.ARFoundation
 {
@@ -19,6 +18,7 @@ namespace Hado.ARFoundation
         private ARTrackedImageManager _arTrackedImageManager;
         
         public ARTrackedImageEventManager arTrackedImageEventManager;
+        public ARTrackedImageReferenceManager arTrackedImageReferenceManager;
 
         public Camera arCamera;
 
@@ -27,6 +27,8 @@ namespace Hado.ARFoundation
         private const string DummyBlackCanvasName = "DummyBlackCanvas";
         private GameObject _dummyBlackCanvas;
 
+        public int CurrentMarkerSetNumber { get; set; } = 0;
+
         public void Init(GameObject go)
         {
             FindObjectsAndComponents(go);
@@ -34,6 +36,8 @@ namespace Hado.ARFoundation
             _arSessionManagerGameObject.SetActive(true);
 
             _dummyBlackCanvas = Resources.Load<GameObject>(DummyBlackCanvasName);
+
+            _arTrackedImageManager.referenceLibrary = arTrackedImageReferenceManager.GetMarkerSet(0);
         }
 
         public void PowerOff()
@@ -48,6 +52,19 @@ namespace Hado.ARFoundation
                 {
                     _arSession.enabled = false;
                 });
+        }
+
+        public async UniTask PowerOffAsync()
+        {
+            AutoFocusRequested = false;
+            arCamera.enabled = false;
+            EnabledPositionTracking = false;
+            EnabledImageTracking = false;
+
+            await UniTask.Delay(300);
+            _arSession.Reset();
+            await UniTask.Delay(300);
+            _arSession.enabled = false;
         }
 
         public void PowerOn(bool enableCamera = true, bool autoFocus = false)
@@ -77,6 +94,27 @@ namespace Hado.ARFoundation
                 });
         }
 
+        public async UniTask PowerOnAsync(bool enableCamera = true, bool autoFocus = false)
+        {
+            // ARCameraを起動したときに前回のラストフレームが一瞬描写される。それを隠すための黒キャンバス
+            var ui = GameObject.Instantiate(_dummyBlackCanvas, arCamera.transform);
+            
+            if (enableCamera)
+                arCamera.enabled = true;
+
+            await UniTask.Delay(1000);
+            GameObject.Destroy(ui);
+            
+            _arCameraManager.enabled = true;
+            EnabledPositionTracking = true;
+            EnabledImageTracking = true;
+            _arSession.enabled = true;
+
+            await UniTask.NextFrame();
+
+            AutoFocusRequested = autoFocus;
+        }
+
         public bool AutoFocusRequested
         {
             set => _arCameraManager.autoFocusRequested = value;
@@ -94,11 +132,25 @@ namespace Hado.ARFoundation
                 if (ImageTargetOffsetMaster.ImageTargets != null)
                 {
                     _arTrackedImageManager.enabled = value;
+                    arTrackedImageEventManager.enabled = value;
                 }
                 else
                 {
                     Debug.LogError("ImageTargetOffsetMaster.ImageTargets has no data");
                 }
+            }
+        }
+
+        public async UniTask ChangeMarkerSet(int num, bool restart = true)
+        {
+            _arTrackedImageManager.referenceLibrary = arTrackedImageReferenceManager.GetMarkerSet(num);
+
+            CurrentMarkerSetNumber = num;
+
+            if (restart)
+            {
+                await PowerOffAsync();
+                await PowerOnAsync(true, _arCameraManager.autoFocusEnabled);
             }
         }
 
@@ -113,6 +165,8 @@ namespace Hado.ARFoundation
             _arInputManager = _arSessionManagerGameObject.GetComponentInChildren<ARInputManager>();
             _arTrackedImageManager = _arSessionManagerGameObject.GetComponentInChildren<ARTrackedImageManager>();
             arTrackedImageEventManager = _arSessionManagerGameObject.GetComponentInChildren<ARTrackedImageEventManager>();
+            arTrackedImageReferenceManager =
+                _arSessionManagerGameObject.GetComponentInChildren<ARTrackedImageReferenceManager>();
             
             arCamera = _arSessionManagerGameObject.GetComponentInChildren<Camera>();
 
@@ -133,6 +187,12 @@ namespace Hado.ARFoundation
             
             if(_arTrackedImageManager == null)
                 throw new Exception("ARTrackedImageManager not found.");
+            
+            if(arTrackedImageEventManager == null)
+                throw new Exception("ARTrackedImageEventManager not found.");
+            
+            if(arTrackedImageReferenceManager == null)
+                throw new Exception("ARTrackedImageReferenceManager not found.");
 
             if (arCamera == null)
                 throw new Exception("Camera not found.");
