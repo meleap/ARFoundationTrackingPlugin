@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 848409ee8ba454f42a5ddff137688a27, type: 3}
+  m_Name: BlueMarkers
+  m_EditorClassIdentifier: 
+  m_GuidLow: 5552925548529279750
+  m_GuidHigh: 15220831565412803224
+  m_Images:
+  - m_SerializedGuid:
+      m_GuidLow: 5204145043734274580
+      m_GuidHigh: 14596925510616447901
+    m_SerializedTextureGuid:
+      m_GuidLow: 14178906487698518054
+      m_GuidHigh: 13376314322388755753
+    m_Size: {x: 6, y: 2.658}
+    m_SpecifySize: 1
+    m_Name: PvP_Marker_3_Blue
+    m_Texture: {fileID: 0}
+  - m_SerializedGuid:
+      m_GuidLow: 4741892051428450947
+      m_GuidHigh: 5665274175710753973
+    m_SerializedTextureGuid:
+      m_GuidLow: 7211147045418451765
+      m_GuidHigh: 16303739321025013400
+    m_Size: {x: 0.362838, y: 0.16}
+    m_SpecifySize: 1
+    m_Name: PvP_Marker_2_Blue
+    m_Texture: {fileID: 0}

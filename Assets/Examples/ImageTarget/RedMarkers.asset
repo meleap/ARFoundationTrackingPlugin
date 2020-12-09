@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 848409ee8ba454f42a5ddff137688a27, type: 3}
+  m_Name: RedMarkers
+  m_EditorClassIdentifier: 
+  m_GuidLow: 4877377533100508438
+  m_GuidHigh: 12845345886816327087
+  m_Images:
+  - m_SerializedGuid:
+      m_GuidLow: 5394463809000321179
+      m_GuidHigh: 7523519148502089647
+    m_SerializedTextureGuid:
+      m_GuidLow: 8376113327596414678
+      m_GuidHigh: 18433509961957685034
+    m_Size: {x: 0.362838, y: 0.16}
+    m_SpecifySize: 1
+    m_Name: PvP_Marker_2_Red
+    m_Texture: {fileID: 0}
+  - m_SerializedGuid:
+      m_GuidLow: 5224488863307191680
+      m_GuidHigh: 7006262980217716377
+    m_SerializedTextureGuid:
+      m_GuidLow: 17637094168112770772
+      m_GuidHigh: 15417653025665432153
+    m_Size: {x: 6, y: 2.658}
+    m_SpecifySize: 1
+    m_Name: PvP_Marker_3_Red
+    m_Texture: {fileID: 0}
