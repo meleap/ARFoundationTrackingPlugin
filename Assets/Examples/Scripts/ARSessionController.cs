@@ -1,15 +1,13 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.XR.ARSubsystems;
 using Hado.ARFoundation;
 
 public class ARSessionController : MonoBehaviour
 {
-    [SerializeField] private XRReferenceImageLibrary markerLibrary;
-
-
     public void ChangePositionTrackingState(bool state)
     {
         ARSessionManager.Instance.EnabledPositionTracking = state;
@@ -37,6 +35,8 @@ public class ARSessionController : MonoBehaviour
 
     private void IgnoreMarkers(string ignoreWord)
     {
+        var num = ARSessionManager.Instance.CurrentMarkerSetNumber;
+        var markerLibrary = ARSessionManager.Instance.arTrackedImageReferenceManager.GetMarkerSet(num);
         var list = new List<string>();
         foreach (var imageTarget in markerLibrary)
         {
@@ -59,5 +59,13 @@ public class ARSessionController : MonoBehaviour
         {
             ARSessionManager.Instance.PowerOff();
         }
+    }
+
+    public void ChangeMarkerSet(int num)
+    {
+        UniTask.Void(async () =>
+        {
+            await ARSessionManager.Instance.ChangeMarkerSet(num);
+        });
     }
 }
