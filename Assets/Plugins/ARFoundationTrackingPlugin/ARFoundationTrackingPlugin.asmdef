@@ -3,7 +3,8 @@
     "references": [
         "UniRx",
         "Unity.XR.ARFoundation",
-        "Unity.XR.ARSubsystems"
+        "Unity.XR.ARSubsystems",
+        "UniTask"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
