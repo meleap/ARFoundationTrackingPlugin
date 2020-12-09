@@ -46,6 +46,7 @@ namespace Hado.ARFoundation
         {
             Debug.Log("Unregister trackedImagesChanged event: OnTrackedImagesChanged");
             m_TrackedImageManager.trackedImagesChanged -= OnTrackedImagesChanged;
+            _detectedReferenceAnchors.Clear();
         }
 
 
