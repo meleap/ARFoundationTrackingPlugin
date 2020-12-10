@@ -49,23 +49,24 @@ public class ARSessionController : MonoBehaviour
         PositionManager.Instance.WorldAnchor.GetComponent<WorldAnchorManager>().IgnoreMarkerNames = list.ToArray();
     }
 
-    public void Power(bool IsOn)
+    public void Power(bool isOn)
     {
-        if (IsOn)
-        {
+        if (isOn)
             ARSessionManager.Instance.PowerOn();
-        }
         else
-        {
             ARSessionManager.Instance.PowerOff();
-        }
+    }
+
+    public void PowerAsync(bool isOn)
+    {
+        if (isOn)
+            UniTask.Void(async () => await ARSessionManager.Instance.PowerOnAsync());
+        else
+            UniTask.Void(async () => await ARSessionManager.Instance.PowerOffAsync());
     }
 
     public void ChangeMarkerSet(int num)
     {
-        UniTask.Void(async () =>
-        {
-            await ARSessionManager.Instance.ChangeMarkerSet(num);
-        });
+        UniTask.Void(async () => { await ARSessionManager.Instance.ChangeMarkerSet(num); });
     }
 }
