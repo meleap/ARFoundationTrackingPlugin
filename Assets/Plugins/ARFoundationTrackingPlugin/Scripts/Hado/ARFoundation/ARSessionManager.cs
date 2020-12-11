@@ -67,7 +67,7 @@ namespace Hado.ARFoundation
             _arSession.enabled = false;
         }
 
-        public void PowerOn(bool enableCamera = true, bool autoFocus = false)
+        public void PowerOn(bool enableCamera = true, bool autoFocus = false, int warmupDelay = 1000)
         {
             // ARCameraを起動したときに前回のラストフレームが一瞬描写される。それを隠すための黒キャンバス
             var ui = GameObject.Instantiate(_dummyBlackCanvas, arCamera.transform);
@@ -87,14 +87,14 @@ namespace Hado.ARFoundation
                     
                 });
 
-            Observable.Timer(TimeSpan.FromMilliseconds(1000))
+            Observable.Timer(TimeSpan.FromMilliseconds(warmupDelay))
                 .Subscribe(_ =>
                 {
                     GameObject.Destroy(ui);
                 });
         }
 
-        public async UniTask PowerOnAsync(bool enableCamera = true, bool autoFocus = false)
+        public async UniTask PowerOnAsync(bool enableCamera = true, bool autoFocus = false, int warmupDelay = 1000)
         {
             // ARCameraを起動したときに前回のラストフレームが一瞬描写される。それを隠すための黒キャンバス
             var ui = GameObject.Instantiate(_dummyBlackCanvas, arCamera.transform);
@@ -102,13 +102,14 @@ namespace Hado.ARFoundation
             if (enableCamera)
                 arCamera.enabled = true;
 
-            await UniTask.Delay(1000);
-            GameObject.Destroy(ui);
-            
             _arCameraManager.enabled = true;
             EnabledPositionTracking = true;
             EnabledImageTracking = true;
             _arSession.enabled = true;
+
+            await UniTask.Delay(warmupDelay);
+            
+            GameObject.Destroy(ui);
 
             await UniTask.NextFrame();
 
