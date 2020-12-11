@@ -46,12 +46,11 @@ namespace Hado.ARFoundation
             arCamera.enabled = false;
             EnabledPositionTracking = false;
             EnabledImageTracking = false;
-
-            Observable.NextFrame()
-                .Subscribe(_ =>
-                {
-                    _arSession.enabled = false;
-                });
+            
+            Observable.Timer(TimeSpan.FromMilliseconds(300))
+                .Do(_ => _arSession.Reset() )
+                .Delay(TimeSpan.FromMilliseconds(300))
+                .Subscribe(_ => _arSession.enabled = false);
         }
 
         public async UniTask PowerOffAsync()
