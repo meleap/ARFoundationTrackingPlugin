@@ -46,6 +46,7 @@ namespace Hado.ARFoundation
             arCamera.enabled = false;
             EnabledPositionTracking = false;
             EnabledImageTracking = false;
+            arTrackedImageEventManager.Clear();
             
             Observable.Timer(TimeSpan.FromMilliseconds(300))
                 .Do(_ => _arSession.Reset() )
@@ -59,6 +60,7 @@ namespace Hado.ARFoundation
             arCamera.enabled = false;
             EnabledPositionTracking = false;
             EnabledImageTracking = false;
+            arTrackedImageEventManager.Clear();
 
             await UniTask.Delay(300);
             _arSession.Reset();

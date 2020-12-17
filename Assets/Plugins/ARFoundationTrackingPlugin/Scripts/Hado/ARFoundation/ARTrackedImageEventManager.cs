@@ -12,16 +12,13 @@ namespace Hado.ARFoundation
     [RequireComponent(typeof(ARTrackedImageManager))]
     public class ARTrackedImageEventManager : MonoBehaviour
     {
-        Subject<ARTrackedImage> _trackImagesChangedSubject = new Subject<ARTrackedImage>();
+        private readonly Subject<ARTrackedImage> _trackImagesChangedSubject = new Subject<ARTrackedImage>();
 
-        public IObservable<ARTrackedImage> OnTrackedImagesChangedObservable
-        {
-            get { return _trackImagesChangedSubject.AsObservable(); }
-        }
+        public IObservable<ARTrackedImage> OnTrackedImagesChangedObservable => _trackImagesChangedSubject.AsObservable();
 
-        ARTrackedImageManager m_TrackedImageManager;
+        private ARTrackedImageManager _mTrackedImageManager;
 
-        Dictionary<string, GameObject> _detectedReferenceAnchors = new Dictionary<string, GameObject>();
+        private readonly Dictionary<string, GameObject> _detectedReferenceAnchors = new Dictionary<string, GameObject>();
 
         public GameObject GetReferenceAnchor(string imageName)
         {
@@ -31,26 +28,29 @@ namespace Hado.ARFoundation
             return _detectedReferenceAnchors[imageName];
         }
 
-        void Awake()
+        public void Clear()
         {
-            m_TrackedImageManager = GetComponent<ARTrackedImageManager>();
-        }
-
-        void OnEnable()
-        {
-            Debug.Log("Register trackedImagesChanged event: OnTrackedImagesChanged");
-            m_TrackedImageManager.trackedImagesChanged += OnTrackedImagesChanged;
-        }
-
-        void OnDisable()
-        {
-            Debug.Log("Unregister trackedImagesChanged event: OnTrackedImagesChanged");
-            m_TrackedImageManager.trackedImagesChanged -= OnTrackedImagesChanged;
             _detectedReferenceAnchors.Clear();
         }
 
+        private void Awake()
+        {
+            _mTrackedImageManager = GetComponent<ARTrackedImageManager>();
+        }
 
-        void OnTrackedImagesChanged(ARTrackedImagesChangedEventArgs eventArgs)
+        private void OnEnable()
+        {
+            Debug.Log("Register trackedImagesChanged event: OnTrackedImagesChanged");
+            _mTrackedImageManager.trackedImagesChanged += OnTrackedImagesChanged;
+        }
+
+        private void OnDisable()
+        {
+            Debug.Log("Unregister trackedImagesChanged event: OnTrackedImagesChanged");
+            _mTrackedImageManager.trackedImagesChanged -= OnTrackedImagesChanged;
+        }
+
+        private void OnTrackedImagesChanged(ARTrackedImagesChangedEventArgs eventArgs)
         {
             foreach (var trackedImage in eventArgs.added)
             {
@@ -66,7 +66,7 @@ namespace Hado.ARFoundation
             }
         }
 
-        void InitAnchorTransform(ARTrackedImage trackedImage)
+        private void InitAnchorTransform(ARTrackedImage trackedImage)
         {
             Debug.Log("InitAnchorTransform");
             var markerName = trackedImage.referenceImage.name;
@@ -77,7 +77,7 @@ namespace Hado.ARFoundation
 
             var t = anchor.gameObject.transform;
             t.localPosition = m.MultiplyPoint3x4(t.localPosition);
-            t.rotation = t.rotation * Quaternion.Inverse(offset.rotation);
+            t.rotation *= Quaternion.Inverse(offset.rotation);
 
             _detectedReferenceAnchors.Add(markerName, anchor.gameObject);
         }
