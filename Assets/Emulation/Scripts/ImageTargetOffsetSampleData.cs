@@ -15,7 +15,7 @@ public static class ImageTargetOffsetSampleData
 
         new ImageTargetOffset(
             "PvP_Marker_2_Red",
-            new Vector3(0, 1.33f/100, 5f/100),
+            new Vector3(0, 0, 0),
             Quaternion.Euler(-90f, 0, 0)
         ),
 
