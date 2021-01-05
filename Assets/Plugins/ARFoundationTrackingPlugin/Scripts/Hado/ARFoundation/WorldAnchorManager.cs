@@ -47,12 +47,9 @@ namespace Hado.ARFoundation
         private void Start()
         {
             ARSessionManager.Instance.arTrackedImageEventManager.OnTrackedImagesChangedObservable
-                .Where(t => t.trackingState != TrackingState.None)
                 .Where(_ => !_isMoving)
                 .Subscribe(t =>
                 {
-                    Debug.Log("Detect");
-                    // TODO: この処理をリニアではなくなんらかのスムージング入れると体感が良くなりそう
                     // TODO: 今認識してる1つのマーカーの情報だけで補正してるので、もっと頭いいロジックにしたい
 
                     _anchor =
@@ -61,6 +58,7 @@ namespace Hado.ARFoundation
                     _moveEndRotation = _anchor.transform.rotation;
 
                     PositionManager.Instance.LastDetectedAnchorName = t.referenceImage.name;
+                    Debug.Log($"{t.referenceImage.name} detected");
                     
                     if (Vector3.Distance(_transform.position, _moveEndPosition) > MovingStartThreshold)
                     {

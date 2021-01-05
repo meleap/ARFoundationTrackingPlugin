@@ -55,12 +55,15 @@ namespace Hado.ARFoundation
             foreach (var trackedImage in eventArgs.added)
             {
                 // 初回だけの処理はここに
+                Debug.Log($"OnTrackedImagesChanged: add: {trackedImage.trackingState}");
                 InitAnchorTransform(trackedImage);
                 _trackImagesChangedSubject.OnNext(trackedImage);
             }
 
             foreach (var trackedImage in eventArgs.updated)
             {
+                if (trackedImage.trackingState != TrackingState.Tracking) return;
+                
                 Debug.Log($"OnTrackedImagesChanged: updated: {trackedImage.trackingState}");
                 _trackImagesChangedSubject.OnNext(trackedImage);
             }
