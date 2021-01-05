@@ -15,14 +15,14 @@ namespace Hado.ARFoundation
         void Awake()
         {
             if(MarkerSets.Length == 0)
-                Debug.LogError("MarkerSets is not defined");
+                Debug.LogWarning("MarkerSets is not defined");
         }
 
         public XRReferenceImageLibrary GetMarkerSet(int num)
         {
             if(num > MarkerSets.Length)
                 throw new Exception("invalid marker set number");
-            return MarkerSets[num];
+            return MarkerSets.Length == 0 ? null : MarkerSets[num];
         }
     }
 }
