@@ -133,15 +133,11 @@ namespace Hado.ARFoundation
         {
             set
             {
-                if (ImageTargetOffsetMaster.ImageTargets != null)
-                {
-                    _arTrackedImageManager.enabled = value;
-                    arTrackedImageEventManager.enabled = value;
-                }
-                else
-                {
-                    Debug.LogError("ImageTargetOffsetMaster.ImageTargets has no data");
-                }
+                _arTrackedImageManager.enabled = value;
+                arTrackedImageEventManager.enabled = value;
+                
+                if (value && ImageTargetOffsetMaster.ImageTargets == null)
+                    throw new Exception("ImageTargetOffsetMaster.ImageTargets has no data");
             }
         }
 
