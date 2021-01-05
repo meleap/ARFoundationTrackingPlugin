@@ -7,6 +7,23 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1626764311238860593, guid: e281dad62f90d4c6fb85fb12451beb7a,
+        type: 3}
+      propertyPath: MarkerSets.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1626764311238860593, guid: e281dad62f90d4c6fb85fb12451beb7a,
+        type: 3}
+      propertyPath: MarkerSets.Array.data[0]
+      value: 
+      objectReference: {fileID: 11400000, guid: 5ca5eb0dc8d564b9d9e840ad749b7bd3,
+        type: 2}
+    - target: {fileID: 1626764311238860593, guid: e281dad62f90d4c6fb85fb12451beb7a,
+        type: 3}
+      propertyPath: MarkerSets.Array.data[1]
+      value: 
+      objectReference: {fileID: 11400000, guid: 99a561e99341045159872b3e1e4b63ac,
+        type: 2}
     - target: {fileID: 1626764311705642708, guid: e281dad62f90d4c6fb85fb12451beb7a,
         type: 3}
       propertyPath: m_LocalPosition.x
