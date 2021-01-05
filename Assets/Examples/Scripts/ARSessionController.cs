@@ -3,11 +3,19 @@ using System.Collections.Generic;
 using System.Linq;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.XR.ARSubsystems;
 using Hado.ARFoundation;
 
 public class ARSessionController : MonoBehaviour
 {
+    public void OnPressBack()
+    {
+        Debug.Log("===Back===");
+        ARSessionManager.Instance.PowerOff();
+        SceneManager.LoadScene("Ready", LoadSceneMode.Single);
+    }
+    
     public void ChangePositionTrackingState(bool state)
     {
         ARSessionManager.Instance.EnabledPositionTracking = state;

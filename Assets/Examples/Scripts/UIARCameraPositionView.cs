@@ -1,9 +1,11 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using Hado.ARFoundation;
 using UnityEngine.SceneManagement;
+using UnityEngine.XR.ARFoundation;
 
 public class UIARCameraPositionView : MonoBehaviour
 {
@@ -18,11 +20,23 @@ public class UIARCameraPositionView : MonoBehaviour
     {
         _pm = PositionManager.Instance;
         _arCamera = ARSessionManager.Instance.arCamera.transform;
+
+        ARSession.stateChanged += UpdateARStateChangedText;
     }
 
-    void Update()
+    private void Update()
     {
+        //UpdatePositionText();
+    }
 
+    private void UpdateARStateChangedText(ARSessionStateChangedEventArgs args)
+    {
+        Debug.Log($"ARSession State: {args.state}");
+        _uiText.text = $"{args.state}";
+    }
+
+    private void UpdatePositionText()
+    {
         var pr = _pm.GetRelativePositionAndRotationFromWorldAnchor(_arCamera.position, _arCamera.rotation);
         _uiText.text = $"pos: ({pr.position.x:f4}, {pr.position.y:f4}, {pr.position.z:f4}) - ";
 
@@ -32,11 +46,8 @@ public class UIARCameraPositionView : MonoBehaviour
         _uiText.text += $"current: {_pm.LastDetectedAnchorName}";
     }
 
-    public void OnPressBack()
+    private void OnDestroy()
     {
-        Debug.Log("===Back===");
-        ARSessionManager.Instance.PowerOff();
-        SceneManager.LoadScene("Ready", LoadSceneMode.Single);
+        ARSession.stateChanged -= UpdateARStateChangedText;
     }
-
 }

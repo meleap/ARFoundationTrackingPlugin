@@ -268,9 +268,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10be3c3cc046f461498d8dc667f066b2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  MarkerSets:
-  - {fileID: 11400000, guid: 5ca5eb0dc8d564b9d9e840ad749b7bd3, type: 2}
-  - {fileID: 11400000, guid: 99a561e99341045159872b3e1e4b63ac, type: 2}
+  MarkerSets: []
 --- !u!1 &1127446630
 GameObject:
   m_ObjectHideFlags: 0
