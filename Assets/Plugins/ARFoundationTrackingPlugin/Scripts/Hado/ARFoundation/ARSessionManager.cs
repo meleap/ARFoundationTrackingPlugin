@@ -29,6 +29,8 @@ namespace Hado.ARFoundation
 
         public int CurrentMarkerSetNumber { get; set; } = 0;
 
+        private bool IsUsingImageTracking => arTrackedImageReferenceManager.MarkerSets.Length > 0;
+
         public void Init(GameObject go)
         {
             FindObjectsAndComponents(go);
@@ -78,7 +80,7 @@ namespace Hado.ARFoundation
             
             _arCameraManager.enabled = true;
             EnabledPositionTracking = true;
-            EnabledImageTracking = true;
+            EnabledImageTracking = IsUsingImageTracking;
             _arSession.enabled = true;
             
             Observable.NextFrame()
@@ -105,7 +107,7 @@ namespace Hado.ARFoundation
 
             _arCameraManager.enabled = true;
             EnabledPositionTracking = true;
-            EnabledImageTracking = true;
+            EnabledImageTracking = IsUsingImageTracking;
             _arSession.enabled = true;
 
             await UniTask.Delay(warmupDelay);
