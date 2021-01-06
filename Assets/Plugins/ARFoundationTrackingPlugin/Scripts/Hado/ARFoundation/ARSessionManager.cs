@@ -12,7 +12,7 @@ namespace Hado.ARFoundation
         private GameObject _arSessionOriginGameObject;
         private GameObject _arSessionGameObject;
 
-        private ARCameraManager _arCameraManager;
+        public ARCameraManager arCameraManager;
         private ARSession _arSession;
         private ARInputManager _arInputManager;
         private ARTrackedImageManager _arTrackedImageManager;
@@ -78,7 +78,7 @@ namespace Hado.ARFoundation
             if (enableCamera)
                 arCamera.enabled = true;
             
-            _arCameraManager.enabled = true;
+            arCameraManager.enabled = true;
             EnabledPositionTracking = true;
             EnabledImageTracking = IsUsingImageTracking;
             _arSession.enabled = true;
@@ -105,7 +105,7 @@ namespace Hado.ARFoundation
             if (enableCamera)
                 arCamera.enabled = true;
 
-            _arCameraManager.enabled = true;
+            arCameraManager.enabled = true;
             EnabledPositionTracking = true;
             EnabledImageTracking = IsUsingImageTracking;
             _arSession.enabled = true;
@@ -121,7 +121,7 @@ namespace Hado.ARFoundation
 
         public bool AutoFocusRequested
         {
-            set => _arCameraManager.autoFocusRequested = value;
+            set => arCameraManager.autoFocusRequested = value;
         }
 
         public bool EnabledPositionTracking
@@ -150,7 +150,7 @@ namespace Hado.ARFoundation
             if (restart)
             {
                 await PowerOffAsync();
-                await PowerOnAsync(true, _arCameraManager.autoFocusEnabled);
+                await PowerOnAsync(true, arCameraManager.autoFocusEnabled);
             }
         }
 
@@ -160,7 +160,7 @@ namespace Hado.ARFoundation
             _arSessionOriginGameObject = go.transform.Find("AR Session Origin").gameObject;
             _arSessionGameObject = go.transform.Find("AR Session").gameObject;
 
-            _arCameraManager = _arSessionManagerGameObject.GetComponentInChildren<ARCameraManager>();
+            arCameraManager = _arSessionManagerGameObject.GetComponentInChildren<ARCameraManager>();
             _arSession = _arSessionManagerGameObject.GetComponentInChildren<ARSession>();
             _arInputManager = _arSessionManagerGameObject.GetComponentInChildren<ARInputManager>();
             _arTrackedImageManager = _arSessionManagerGameObject.GetComponentInChildren<ARTrackedImageManager>();
@@ -176,7 +176,7 @@ namespace Hado.ARFoundation
             if (_arSessionGameObject == null)
                 throw new Exception("GameObject AR Session not found.");
 
-            if (_arCameraManager == null)
+            if (arCameraManager == null)
                 throw new Exception("ARCameraManager not found.");
 
             if (_arSession == null)
