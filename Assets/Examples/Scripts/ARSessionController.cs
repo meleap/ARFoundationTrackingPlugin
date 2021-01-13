@@ -51,4 +51,9 @@ public class ARSessionController : MonoBehaviour
     {
         UniTask.Void(async () => { await ARSessionManager.Instance.ChangeMarkerSet(num); });
     }
+
+    public void ResetSession()
+    {
+        ARSessionManager.Instance.ResetSession();
+    }
 }
