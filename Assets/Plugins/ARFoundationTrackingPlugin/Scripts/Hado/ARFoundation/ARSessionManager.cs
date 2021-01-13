@@ -119,6 +119,12 @@ namespace Hado.ARFoundation
             AutoFocusRequested = autoFocus;
         }
 
+        public void ResetSession()
+        {
+            arTrackedImageEventManager.Clear();
+            _arSession.Reset();
+        }
+
         public bool AutoFocusRequested
         {
             set => arCameraManager.autoFocusRequested = value;
