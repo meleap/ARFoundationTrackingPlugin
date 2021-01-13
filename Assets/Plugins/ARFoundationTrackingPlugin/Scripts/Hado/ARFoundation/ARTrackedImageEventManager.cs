@@ -22,10 +22,7 @@ namespace Hado.ARFoundation
 
         public GameObject GetReferenceAnchor(string imageName)
         {
-            if (!_detectedReferenceAnchors.ContainsKey(imageName))
-                throw new Exception("一度も認識していないか、存在しないマーカーです");
-
-            return _detectedReferenceAnchors[imageName];
+            return _detectedReferenceAnchors.ContainsKey(imageName) ? _detectedReferenceAnchors[imageName] : null;
         }
 
         public void Clear()
