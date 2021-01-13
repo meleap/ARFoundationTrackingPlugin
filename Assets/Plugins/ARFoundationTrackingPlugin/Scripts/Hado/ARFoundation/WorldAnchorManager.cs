@@ -28,9 +28,6 @@ namespace Hado.ARFoundation
         [NonSerialized]
         public float SmoothTime = 0.2f;
         
-        
-        private GameObject _anchor;
-
         private Transform _transform;
         private Vector3 _moveEndPosition;
         private Quaternion _moveEndRotation;
@@ -48,17 +45,18 @@ namespace Hado.ARFoundation
         {
             ARSessionManager.Instance.arTrackedImageEventManager.OnTrackedImagesChangedObservable
                 .Where(_ => !_isMoving)
-                .Subscribe(t =>
+                .Select(t =>  ARSessionManager.Instance.arTrackedImageEventManager.GetReferenceAnchor(t.referenceImage.name))
+                .Where(anchor => anchor != null)
+                .Subscribe(anchor =>
                 {
                     // TODO: 今認識してる1つのマーカーの情報だけで補正してるので、もっと頭いいロジックにしたい
 
-                    _anchor =
-                        ARSessionManager.Instance.arTrackedImageEventManager.GetReferenceAnchor(t.referenceImage.name);
-                    _moveEndPosition = _anchor.transform.position;
-                    _moveEndRotation = _anchor.transform.rotation;
+                    _moveEndPosition = anchor.transform.position;
+                    _moveEndRotation = anchor.transform.rotation;
 
-                    PositionManager.Instance.LastDetectedAnchorName = t.referenceImage.name;
-                    Debug.Log($"{t.referenceImage.name} detected");
+                    var referenceImageName = anchor.GetComponent<Anchor>().Name;
+                    PositionManager.Instance.LastDetectedAnchorName = referenceImageName;
+                    Debug.Log($"{referenceImageName} detected");
                     
                     if (Vector3.Distance(_transform.position, _moveEndPosition) > MovingStartThreshold)
                     {
