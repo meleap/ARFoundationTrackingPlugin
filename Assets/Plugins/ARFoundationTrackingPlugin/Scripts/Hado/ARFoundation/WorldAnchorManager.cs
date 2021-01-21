@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UniRx;
+using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
 
 namespace Hado.ARFoundation
@@ -47,6 +48,7 @@ namespace Hado.ARFoundation
                 .Where(_ => !_isMoving)
                 .Select(t =>  ARSessionManager.Instance.arTrackedImageEventManager.GetReferenceAnchor(t.referenceImage.name))
                 .Where(anchor => anchor != null)
+                .Where(_ => ARSession.state >= ARSessionState.SessionTracking)
                 .Subscribe(anchor =>
                 {
                     // TODO: 今認識してる1つのマーカーの情報だけで補正してるので、もっと頭いいロジックにしたい
