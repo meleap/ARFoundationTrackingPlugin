@@ -125,6 +125,24 @@ namespace Hado.ARFoundation
             _arSession.Reset();
         }
 
+        public async UniTask ResetSessionAsync()
+        {
+            EnabledImageTracking = false;
+            EnabledPositionTracking = false;
+            
+            await WaitForARSessionReady();
+            
+            arTrackedImageEventManager.Clear();
+            _arSession.Reset();
+            
+            await WaitForARSessionReady();
+            
+            EnabledImageTracking = IsUsingImageTracking;
+            EnabledPositionTracking = true;
+            
+            await WaitForARSessionReady();
+        }
+
         public bool AutoFocusRequested
         {
             set => arCameraManager.autoFocusRequested = value;
@@ -202,6 +220,17 @@ namespace Hado.ARFoundation
 
             if (arCamera == null)
                 throw new Exception("Camera not found.");
+        }
+        
+        private async UniTask WaitForARSessionReady()
+        {
+            Debug.Log($"Start WaitFor: {ARSession.state}");
+
+            while (ARSession.state != ARSessionState.SessionTracking)
+            {
+                Debug.Log($"Waiting: {ARSession.state}");
+                await UniTask.NextFrame();
+            }
         }
     }
 }
