@@ -14,8 +14,12 @@ namespace Hado.ARFoundation
         /// <summary>
         /// プルつき防止のために、マーカー位置のズレがMovingThreshold以下の場合はWorldAnchorを動かさない
         /// </summary>
-        [NonSerialized]
-        public float MovingStartThreshold = 0.05f;
+        [NonSerialized] public float MovingStartThreshold = 0.05f;
+
+        /// <summary>
+        /// フレーム間の移動距離がこの値より大きい場合はノイズとして捨てる
+        /// </summary>
+        [NonSerialized] public float MovingNoiseThreshold = 0.05f;
         
         /// <summary>
         /// 予定位置からの距離がこの値になったら移動を停止する
@@ -45,26 +49,23 @@ namespace Hado.ARFoundation
         private void Start()
         {
             ARSessionManager.Instance.arTrackedImageEventManager.OnTrackedImagesChangedObservable
-                .Where(_ => !_isMoving)
-                .Select(t =>  ARSessionManager.Instance.arTrackedImageEventManager.GetReferenceAnchor(t.referenceImage.name))
-                .Where(anchor => anchor != null)
+                .Where(_ => !_isMoving) // 補正中は流さない
+                .Do(t => PositionManager.Instance.LastDetectedAnchorName = t.referenceImage.name)
+                .Do(t => Debug.Log($"{t.referenceImage.name} detected"))
+                .Select(t =>  ARSessionManager.Instance.arTrackedImageEventManager.GetReferenceAnchor(t.referenceImage.name).transform.position)
                 .Where(_ => ARSession.state >= ARSessionState.SessionTracking)
-                .Subscribe(anchor =>
+                .Buffer(3)
+                .Subscribe(positions =>
                 {
-                    // TODO: 今認識してる1つのマーカーの情報だけで補正してるので、もっと頭いいロジックにしたい
-
-                    _moveEndPosition = anchor.transform.position;
-                    _moveEndRotation = anchor.transform.rotation;
-
-                    var referenceImageName = anchor.GetComponent<Anchor>().Name;
-                    PositionManager.Instance.LastDetectedAnchorName = referenceImageName;
-                    Debug.Log($"{referenceImageName} detected");
+                    // フレーム間の移動距離が大きすぎる場合はノイズとして捨てる
+                    if (IsNoiseData(positions)) return;
                     
-                    if (Vector3.Distance(_transform.position, _moveEndPosition) > MovingStartThreshold)
-                    {
-                        Debug.Log($"Over MovingStartThreshold");
-                        _isMoving = true;
-                    }
+                    _moveEndPosition = positions[2];
+                    _moveEndRotation =
+                        ARSessionManager.Instance.arTrackedImageEventManager.GetReferenceAnchor(PositionManager.Instance
+                            .LastDetectedAnchorName).transform.rotation;
+
+                    _isMoving = true;
                 }).AddTo(this);
             
             // Transformのズレを補正
@@ -85,6 +86,13 @@ namespace Hado.ARFoundation
                     _transform.SetPositionAndRotation(_transform.position, _moveEndRotation);
                     
                 }).AddTo(this);
+        }
+
+        private bool IsNoiseData(IList<Vector3> positions)
+        {
+            var dist1 = Vector3.Distance(positions[0], positions[1]);
+            var dist2 = Vector3.Distance(positions[1], positions[2]);
+            return Math.Abs(dist1 - dist2) > MovingNoiseThreshold;
         }
     }
 }
