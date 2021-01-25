@@ -2,8 +2,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using UnityEngine;
 using UniRx;
+using Cysharp.Threading.Tasks;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
 
@@ -94,5 +96,34 @@ namespace Hado.ARFoundation
             var dist2 = Vector3.Distance(positions[1], positions[2]);
             return Math.Abs(dist1 - dist2) > MovingNoiseThreshold;
         }
+        
+        public IDisposable RegisterIntervalTracking(CancellationTokenSource cancellationTokenSource, int imageTrackingIntervalMils = 3000)
+        {
+            Debug.Log("RegisterIntervalTracking");
+            return ARSessionManager.Instance.arTrackedImageEventManager.OnTrackedImagesChangedObservable
+                .Where(_ => _isMoving) // 補正が始まったら発火
+                .Subscribe(async _ =>
+                    {
+                        ARSessionManager.Instance.EnabledImageTracking = false;
+
+                        await WaitForMoveEnd();
+
+                        await UniTask.Delay(TimeSpan.FromMilliseconds(imageTrackingIntervalMils));
+
+                        if (cancellationTokenSource.Token.IsCancellationRequested) return;
+
+                        ARSessionManager.Instance.EnabledImageTracking = true;
+                    }
+                );
+        }
+        
+        private async UniTask WaitForMoveEnd()
+        {
+            while (_isMoving)
+            {
+                await UniTask.NextFrame();
+            }
+        }
+
     }
 }
