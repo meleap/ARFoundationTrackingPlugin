@@ -34,8 +34,11 @@ namespace Hado.ARFoundation
         public void Init(GameObject go)
         {
             FindObjectsAndComponents(go);
-            arCamera.enabled = false;
             _arSessionManagerGameObject.SetActive(true);
+            
+            arCamera.enabled = false;
+            _arSession.enabled = false;
+            _arInputManager.enabled = false;
 
             _dummyBlackCanvas = Resources.Load<GameObject>(DummyBlackCanvasName);
 
