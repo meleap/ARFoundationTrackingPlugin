@@ -94,6 +94,7 @@ namespace Hado.ARFoundation
         {
             var dist1 = Vector3.Distance(positions[0], positions[1]);
             var dist2 = Vector3.Distance(positions[1], positions[2]);
+            Debug.Log($"MovingNoiseThreshold: {Math.Abs(dist1 - dist2):F6}");
             return Math.Abs(dist1 - dist2) > MovingNoiseThreshold;
         }
         
