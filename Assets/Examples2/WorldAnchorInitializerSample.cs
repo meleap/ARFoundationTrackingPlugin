@@ -14,16 +14,20 @@ public class WorldAnchorInitializerSample : MonoBehaviour
     [SerializeField] private Button btn;
     [SerializeField] private Text txt;
     [SerializeField] private Text status;
-    
+
+    private WorldAnchorManager _worldAnchorManager;
+
     private CompositeDisposable _disposable;
-    
+
     private CancellationTokenSource _ctsIntervalTracking;
 
     private int click = 0;
 
     private void Awake()
     {
-        ARSessionManager.Instance.Init(gameObject);
+        ImageTargetOffsetMaster.ImageTargets = ImageTargetOffsetSampleData.ImageTargets;
+        _worldAnchorManager = GetComponent<WorldAnchorManager>();
+        
         _disposable = new CompositeDisposable();
     }
 
@@ -34,19 +38,19 @@ public class WorldAnchorInitializerSample : MonoBehaviour
 
     private async void Start()
     {
-        ImageTargetOffsetMaster.ImageTargets = HogeData.ImageTargets;
+        
         await ARSessionManager.Instance.PowerOnAsync();
 
         // 最初にマーカー認識してからは認識頻度を落とす
         SubscribeFirstAction();
-        
+
         // ボタン操作によるARSessionのリセット
         btn.OnClickAsObservable()
             .Subscribe(async _ =>
             {
                 btn.interactable = false;
-                var nextMode = txt.text == "on" ? "off" : "on";
-                if (nextMode == "on")
+                var nextMode = txt.text == "interval" ? "normal" : "interval";
+                if (nextMode == "normal")
                 {
                     _disposable.Clear();
                     _ctsIntervalTracking?.Cancel();
@@ -63,7 +67,8 @@ public class WorldAnchorInitializerSample : MonoBehaviour
                 }
                 else
                 {
-                    RegisterIntervalTracking();
+                    _ctsIntervalTracking = new CancellationTokenSource();
+                    _disposable.Add(_worldAnchorManager.RegisterIntervalTracking(_ctsIntervalTracking));
                 }
 
                 txt.text = nextMode;
@@ -76,28 +81,12 @@ public class WorldAnchorInitializerSample : MonoBehaviour
         Debug.Log("SubscribeFirstAction");
         ARSessionManager.Instance.arTrackedImageEventManager.OnTrackedImagesChangedObservable
             .Take(1)
-            .Subscribe(_ => RegisterIntervalTracking())
-            .AddTo(this);
-    }
-
-    private void RegisterIntervalTracking()
-    {
-        Debug.Log("RegisterIntervalTracking");
-
-        _ctsIntervalTracking = new CancellationTokenSource();
-        
-        ARSessionManager.Instance.arTrackedImageEventManager.OnTrackedImagesChangedObservable
-            .Subscribe(async _ =>
+            .Subscribe(_ =>
             {
-                ARSessionManager.Instance.EnabledImageTracking = false;
-
-                await UniTask.Delay(TimeSpan.FromMilliseconds(5000));
-                
-                if (_ctsIntervalTracking.Token.IsCancellationRequested) return;
-
-                ARSessionManager.Instance.EnabledImageTracking = true;
+                _ctsIntervalTracking = new CancellationTokenSource();
+                _disposable.Add(_worldAnchorManager.RegisterIntervalTracking(_ctsIntervalTracking));
             })
-            .AddTo(_disposable);
+            .AddTo(this);
     }
 
     private async UniTask WaitForClicker()
@@ -120,15 +109,3 @@ public class WorldAnchorInitializerSample : MonoBehaviour
     }
 }
 
-
-public static class HogeData 
-{
-    public static ImageTargetOffset[] ImageTargets =
-    {
-        new ImageTargetOffset(
-            "PvP_Marker_3_Red",
-            new Vector3(0, 0, 0),
-            Quaternion.Euler(0, 0, 0)
-        ),
-    };
-}
