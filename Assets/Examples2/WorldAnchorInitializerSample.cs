@@ -27,18 +27,24 @@ public class WorldAnchorInitializerSample : MonoBehaviour
     {
         ImageTargetOffsetMaster.ImageTargets = ImageTargetOffsetSampleData.ImageTargets;
         _worldAnchorManager = GetComponent<WorldAnchorManager>();
-        
+
         _disposable = new CompositeDisposable();
     }
 
     private void Update()
     {
-        status.text = $"{SystemInfo.deviceModel}";
+        //    status.text = $"{SystemInfo.deviceModel}";
     }
 
     private async void Start()
     {
-        
+        _worldAnchorManager.IsMoving
+            .Buffer(2, 1)
+            .Subscribe(data =>
+            {
+                status.text = $"{data[0]} => {data[1]}";
+            });
+
         await ARSessionManager.Instance.PowerOnAsync();
 
         // 最初にマーカー認識してからは認識頻度を落とす
@@ -108,4 +114,3 @@ public class WorldAnchorInitializerSample : MonoBehaviour
         }
     }
 }
-
