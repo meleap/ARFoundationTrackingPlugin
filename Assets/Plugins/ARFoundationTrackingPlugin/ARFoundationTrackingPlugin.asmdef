@@ -1,6 +1,7 @@
 {
     "name": "ARFoundationTrackingPlugin",
     "references": [
+        "LeanTween",
         "UniRx",
         "Unity.XR.ARFoundation",
         "Unity.XR.ARSubsystems",
