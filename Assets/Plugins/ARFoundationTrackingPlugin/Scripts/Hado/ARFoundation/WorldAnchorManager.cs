@@ -31,14 +31,9 @@ namespace Hado.ARFoundation
         [NonSerialized] public int NoiseCheckSampleCount = 2;
 
         /// <summary>
-        /// 予定位置からの距離がこの値になったら移動を停止する
+        /// 1fなら1秒かける、というわけでもない（ちょっと長い）, 1.5f前後で調整推奨
         /// </summary>
-        [NonSerialized] public float MovingEndThreshold = 0.01f;
-
-        /// <summary>
-        /// SmoothDumpのSmoothTime, 1fなら1秒かける、というわけでもない（ちょっと長い）, 1f前後で調整推奨
-        /// </summary>
-        [NonSerialized] public float SmoothTime = 1f;
+        [NonSerialized] public float SmoothTime = 1.5f;
 
         private Vector3 _moveEndPosition;
         private Quaternion _moveEndRotation;
@@ -96,9 +91,9 @@ namespace Hado.ARFoundation
                 Debug.Log($"Noise check[{i}]: {Vector3.Distance(positions[i], positions[i + 1]):F6}");
             }
             
-            Debug.Log($"Check: {_noiseCheckSamples.Any(x => x > MovingEndThreshold)}");
+            Debug.Log($"Check: {_noiseCheckSamples.Any(x => x > MovingNoiseThreshold)}");
 
-            return _noiseCheckSamples.Any(x => x > MovingEndThreshold);
+            return _noiseCheckSamples.Any(x => x > MovingNoiseThreshold);
         }
 
         public IDisposable RegisterIntervalTracking(CancellationTokenSource cancellationTokenSource,
