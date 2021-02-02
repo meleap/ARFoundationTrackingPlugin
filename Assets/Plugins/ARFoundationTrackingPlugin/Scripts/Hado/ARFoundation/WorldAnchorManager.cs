@@ -36,15 +36,12 @@ namespace Hado.ARFoundation
         [NonSerialized] public float MovingEndThreshold = 0.01f;
 
         /// <summary>
-        /// SmoothDumpのSmoothTime, 1fなら1秒かける、というわけでもない（ちょっと長い）, 0.2f前後で調整推奨
+        /// SmoothDumpのSmoothTime, 1fなら1秒かける、というわけでもない（ちょっと長い）, 1f前後で調整推奨
         /// </summary>
-        [NonSerialized] public float SmoothTime = 0.2f;
+        [NonSerialized] public float SmoothTime = 1f;
 
-        private Transform _transform;
         private Vector3 _moveEndPosition;
         private Quaternion _moveEndRotation;
-
-        private Vector3 _velocity = Vector3.zero;
 
         private List<float> _noiseCheckSamples = new List<float>();
 
@@ -53,7 +50,6 @@ namespace Hado.ARFoundation
         private void Awake()
         {
             PositionManager.Instance.WorldAnchor = gameObject;
-            _transform = transform; //Transformは変数に入れたほうがパフォーマンスがいいらしい
         }
 
         private void Start()
@@ -83,27 +79,12 @@ namespace Hado.ARFoundation
                     _moveEndRotation =
                         ARSessionManager.Instance.arTrackedImageEventManager.GetReferenceAnchor(PositionManager.Instance
                             .LastDetectedAnchorName).transform.rotation;
-
+                    
                     IsMoving.Value = MovingStatus.Moving;
-                }).AddTo(this);
-
-            // Transformのズレを補正
-            Observable.EveryUpdate()
-                .Where(_ => IsMoving.Value == MovingStatus.Moving)
-                .Subscribe(_ =>
-                {
-                    _transform.position =
-                        Vector3.SmoothDamp(_transform.position, _moveEndPosition, ref _velocity, SmoothTime);
-
-                    // まだMovingEndThresholdより距離があるので継続
-                    if (Vector3.Distance(_transform.position, _moveEndPosition) > MovingEndThreshold) return;
-
-                    Debug.Log($"Moving finished");
-                    IsMoving.Value = MovingStatus.None;
-                    _velocity = Vector3.zero;
-
-                    // rotationはさほどずれることはない前提でなめさないで一気に入れる
-                    _transform.SetPositionAndRotation(_transform.position, _moveEndRotation);
+                    
+                    LeanTween.move(gameObject, _moveEndPosition, SmoothTime).setEaseOutQuint().setOnComplete(() => IsMoving.Value = MovingStatus.None );
+                    LeanTween.rotate(gameObject, _moveEndRotation.eulerAngles, SmoothTime).setEaseOutQuint();
+                    
                 }).AddTo(this);
         }
 
