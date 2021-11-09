@@ -17,7 +17,7 @@ public class Ready : MonoBehaviour
         Observable.Timer(TimeSpan.FromMilliseconds(1000))
             .Subscribe(_ =>
             {
-                ARSessionManager.Instance.PowerOn();
+                ARSessionManager.Instance.PowerOnAsync();
             });
     }
 
@@ -30,7 +30,7 @@ public class Ready : MonoBehaviour
         Observable.Timer(TimeSpan.FromMilliseconds(1000))
             .Subscribe(_ =>
             {
-                ARSessionManager.Instance.PowerOn(true, true);
+                ARSessionManager.Instance.PowerOnAsync(true, true);
             });
     }
 }

@@ -12,7 +12,7 @@ public class ARSessionController : MonoBehaviour
     public void OnPressBack()
     {
         Debug.Log("===Back===");
-        ARSessionManager.Instance.PowerOff();
+        ARSessionManager.Instance.PowerOffAsync();
         SceneManager.LoadScene("Ready", LoadSceneMode.Single);
     }
     
@@ -34,9 +34,9 @@ public class ARSessionController : MonoBehaviour
     public void Power(bool isOn)
     {
         if (isOn)
-            ARSessionManager.Instance.PowerOn();
+            ARSessionManager.Instance.PowerOnAsync();
         else
-            ARSessionManager.Instance.PowerOff();
+            ARSessionManager.Instance.PowerOffAsync();
     }
 
     public void PowerAsync(bool isOn)
