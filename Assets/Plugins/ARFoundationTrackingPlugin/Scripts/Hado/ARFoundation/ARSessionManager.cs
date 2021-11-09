@@ -45,23 +45,8 @@ namespace Hado.ARFoundation
             _arTrackedImageManager.referenceLibrary = arTrackedImageReferenceManager.GetMarkerSet(0);
         }
 
-        public void PowerOff()
-        {
-            AutoFocusRequested = false;
-            arCamera.enabled = false;
-            EnabledPositionTracking = false;
-            EnabledImageTracking = false;
-            arTrackedImageEventManager.Clear();
-            
-            Observable.Timer(TimeSpan.FromMilliseconds(300))
-                .Do(_ => _arSession.Reset() )
-                .Delay(TimeSpan.FromMilliseconds(300))
-                .Subscribe(_ => _arSession.enabled = false);
-        }
-
         public async UniTask PowerOffAsync()
         {
-            AutoFocusRequested = false;
             arCamera.enabled = false;
             EnabledPositionTracking = false;
             EnabledImageTracking = false;
@@ -71,33 +56,6 @@ namespace Hado.ARFoundation
             _arSession.Reset();
             await UniTask.Delay(300);
             _arSession.enabled = false;
-        }
-
-        public void PowerOn(bool enableCamera = true, bool autoFocus = false, int warmupDelay = 1000)
-        {
-            // ARCameraを起動したときに前回のラストフレームが一瞬描写される。それを隠すための黒キャンバス
-            var ui = GameObject.Instantiate(_dummyBlackCanvas, arCamera.transform);
-            
-            if (enableCamera)
-                arCamera.enabled = true;
-            
-            arCameraManager.enabled = true;
-            EnabledPositionTracking = true;
-            EnabledImageTracking = IsUsingImageTracking;
-            _arSession.enabled = true;
-            
-            Observable.NextFrame()
-                .Subscribe(_ =>
-                {
-                    AutoFocusRequested = autoFocus;
-                    
-                });
-
-            Observable.Timer(TimeSpan.FromMilliseconds(warmupDelay))
-                .Subscribe(_ =>
-                {
-                    GameObject.Destroy(ui);
-                });
         }
 
         public async UniTask PowerOnAsync(bool enableCamera = true, bool autoFocus = false, int warmupDelay = 1000)
@@ -119,7 +77,8 @@ namespace Hado.ARFoundation
 
             await UniTask.NextFrame();
 
-            AutoFocusRequested = autoFocus;
+            if(autoFocus)
+                AutoFocusRequested = true;
         }
 
         public void ResetSession()
