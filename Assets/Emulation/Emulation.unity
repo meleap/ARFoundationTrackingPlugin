@@ -1803,7 +1803,7 @@ PrefabInstance:
     - target: {fileID: 3292508429380708806, guid: b8ab852aa69154a858af84322b11853e,
         type: 3}
       propertyPath: arMarkers.Array.size
-      value: 2
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 3292508429380708806, guid: b8ab852aa69154a858af84322b11853e,
         type: 3}
@@ -1816,6 +1816,12 @@ PrefabInstance:
       propertyPath: arMarkers.Array.data[1]
       value: 
       objectReference: {fileID: 11400000, guid: 7d786aafbd49949ee8758c25c9ba8d12,
+        type: 2}
+    - target: {fileID: 3292508429380708806, guid: b8ab852aa69154a858af84322b11853e,
+        type: 3}
+      propertyPath: arMarkers.Array.data[2]
+      value: 
+      objectReference: {fileID: 11400000, guid: ab7e3ca851d694957af2f7df6809b7b5,
         type: 2}
     - target: {fileID: 3292508429380708807, guid: b8ab852aa69154a858af84322b11853e,
         type: 3}
