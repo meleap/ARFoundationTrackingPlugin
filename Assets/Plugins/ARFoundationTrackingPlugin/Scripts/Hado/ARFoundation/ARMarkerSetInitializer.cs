@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace Hado.ARFoundation
@@ -15,9 +16,9 @@ namespace Hado.ARFoundation
                 Debug.LogWarning("ARMarkerSet is not defined");
                 return;
             }
-            
+
             // とりあえず先頭をデフォルトに設定
-            ARMarkerManager.Instance.ChangeMarkerSet(arMarkers[0].SetName);
+            ARSessionManager.Instance.ChangeMarkerSet(arMarkers[0].SetName).Forget();
         }
     }
 
