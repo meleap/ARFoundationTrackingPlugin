@@ -47,9 +47,9 @@ public class ARSessionController : MonoBehaviour
             UniTask.Void(async () => await ARSessionManager.Instance.PowerOffAsync());
     }
 
-    public void ChangeMarkerSet(int num)
+    public void ChangeMarkerSet(string markerSetName)
     {
-        UniTask.Void(async () => { await ARSessionManager.Instance.ChangeMarkerSet(num); });
+        UniTask.Void(async () => { await ARSessionManager.Instance.ChangeMarkerSet(markerSetName); });
     }
 
     public void ResetSession()
