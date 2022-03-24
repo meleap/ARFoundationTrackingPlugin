@@ -13,20 +13,11 @@ namespace Hado.ARFoundation
 
     public class PositionManager
     {
-        static PositionManager instance = new PositionManager();
-
-        public static PositionManager Instance
-        {
-            get
-            {
-                return instance;
-            }
-        }
+        public static PositionManager Instance { get; } = new PositionManager();
 
         public GameObject WorldAnchor { get; set; }
 
         public string LastDetectedAnchorName { get; set; }
-
 
         public Vector3 GetCalibratedPosition(Vector3 position)
         {
@@ -38,25 +29,23 @@ namespace Hado.ARFoundation
             return Quaternion.Inverse(WorldAnchor.transform.rotation) * rotation;
         }
 
-        public PosRot GetRelativePositionAndRotationFromWorldAnchor(Vector3 recievedPosition, Quaternion recievedRotation)
+        public PosRot GetRelativePositionAndRotationFromWorldAnchor(Vector3 receivedPosition, Quaternion receivedRotation)
         {
             if (WorldAnchor != null)
             {
                 return new PosRot()
                 {
-                    position = GetCalibratedPosition(recievedPosition),
-                    rotation = GetCalibratedRotation(recievedRotation)
+                    position = GetCalibratedPosition(receivedPosition),
+                    rotation = GetCalibratedRotation(receivedRotation)
                 };
             }
-            else
+
+            // Debug.LogError("WorldAnchor is not set yet.");
+            return new PosRot()
             {
-                // Debug.LogError("WorldAnchor is not set yet.");
-                return new PosRot()
-                {
-                    position = recievedPosition,
-                    rotation = recievedRotation
-                };
-            }
+                position = receivedPosition,
+                rotation = receivedRotation
+            };
         }
     }
 }
