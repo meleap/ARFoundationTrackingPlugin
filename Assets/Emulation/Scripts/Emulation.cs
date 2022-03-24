@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -24,8 +25,8 @@ public class Emulation : MonoBehaviour
     [SerializeField]
     Button _btnUndetectedBlue;
 
-    readonly string imageTargetNameRed = "PvP_Marker_3_0_4_Red";
-    readonly string imageTargetNameBlue = "PvP_Marker_2_0_1_Blue";
+    readonly string imageTargetNameRed = "PvP_Marker_2_Red";
+    readonly string imageTargetNameBlue = "PvP_Marker_2_Blue";
 
     [SerializeField]
     GameObject _arTrackableGameObject;
@@ -40,6 +41,11 @@ public class Emulation : MonoBehaviour
 
         _btnUndetectedRed.onClick.AddListener(UndetectedRed);
         _btnUndetectedBlue.onClick.AddListener(UndetectedBlue);
+    }
+
+    private void Start()
+    {
+        ARSessionManager.Instance.ChangeMarkerSet("Eye");
     }
 
     public void DetectedRed()
@@ -109,16 +115,15 @@ public class Emulation : MonoBehaviour
 
     void InitAnchorTransform(string imageTargetName, GameObject marker)
     {
-        ImageTargetOffsetMaster.ImageTargets = ImageTargetOffsetSampleData.ImageTargets;
         var trackedImageObject = _createdARTrackedGameObjects[imageTargetName];
 
         var anchor = trackedImageObject.GetComponentInChildren<Anchor>();
         anchor.Name = imageTargetName;
 
-        var offset = ImageTargetOffsetMaster.FindItem(imageTargetName);
-        var m = Matrix4x4.TRS(offset.position, offset.rotation, Vector3.one).inverse;
+        var offset = ARMarkerManager.Instance.GetOffsetByMarkerName(imageTargetName);
+        var m = Matrix4x4.TRS(offset.Position, offset.Rotation, Vector3.one).inverse;
         var t = anchor.gameObject.transform;
         t.localPosition = m.MultiplyPoint3x4(t.localPosition);
-        t.rotation = t.rotation * Quaternion.Inverse(offset.rotation);
+        t.rotation = t.rotation * Quaternion.Inverse(offset.Rotation);
     }
 }

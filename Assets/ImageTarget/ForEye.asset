@@ -1,0 +1,57 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 848409ee8ba454f42a5ddff137688a27, type: 3}
+  m_Name: ForEye
+  m_EditorClassIdentifier: 
+  m_GuidLow: 5744035466254455024
+  m_GuidHigh: 153048888097564576
+  m_Images:
+  - m_SerializedGuid:
+      m_GuidLow: 5309608208360238782
+      m_GuidHigh: 5117134385786688693
+    m_SerializedTextureGuid:
+      m_GuidLow: 8376113327596414678
+      m_GuidHigh: 18433509961957685034
+    m_Size: {x: 6, y: 2.6458087}
+    m_SpecifySize: 1
+    m_Name: PvP_Marker_2_Red
+    m_Texture: {fileID: 0}
+  - m_SerializedGuid:
+      m_GuidLow: 5684244042451363754
+      m_GuidHigh: 443677122653502865
+    m_SerializedTextureGuid:
+      m_GuidLow: 7211147045418451765
+      m_GuidHigh: 16303739321025013400
+    m_Size: {x: 6, y: 2.6458087}
+    m_SpecifySize: 1
+    m_Name: PvP_Marker_2_Blue
+    m_Texture: {fileID: 0}
+  - m_SerializedGuid:
+      m_GuidLow: 4960136773115696113
+      m_GuidHigh: 18242761357895640736
+    m_SerializedTextureGuid:
+      m_GuidLow: 17637094168112770772
+      m_GuidHigh: 15417653025665432153
+    m_Size: {x: 6, y: 2.658}
+    m_SpecifySize: 1
+    m_Name: PvP_Marker_3_Red
+    m_Texture: {fileID: 0}
+  - m_SerializedGuid:
+      m_GuidLow: 4788282678147264994
+      m_GuidHigh: 16466753386636821651
+    m_SerializedTextureGuid:
+      m_GuidLow: 14178906487698518054
+      m_GuidHigh: 13376314322388755753
+    m_Size: {x: 6, y: 2.658}
+    m_SpecifySize: 1
+    m_Name: PvP_Marker_3_Blue
+    m_Texture: {fileID: 0}

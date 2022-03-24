@@ -25,9 +25,7 @@ public class WorldAnchorInitializerSample : MonoBehaviour
 
     private void Awake()
     {
-        ImageTargetOffsetMaster.ImageTargets = ImageTargetOffsetSampleData.ImageTargets;
         _worldAnchorManager = GetComponent<WorldAnchorManager>();
-
         _disposable = new CompositeDisposable();
     }
 
@@ -38,6 +36,7 @@ public class WorldAnchorInitializerSample : MonoBehaviour
 
     private async void Start()
     {
+        ARSessionManager.Instance.ChangeMarkerSet("");
         _worldAnchorManager.IsMoving
             .Buffer(2, 1)
             .Subscribe(data =>

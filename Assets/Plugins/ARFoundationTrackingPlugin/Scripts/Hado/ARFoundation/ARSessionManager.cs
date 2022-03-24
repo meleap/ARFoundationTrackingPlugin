@@ -1,5 +1,4 @@
 ﻿using System;
-using UniRx;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 using Cysharp.Threading.Tasks;
@@ -18,7 +17,6 @@ namespace Hado.ARFoundation
         private ARTrackedImageManager _arTrackedImageManager;
         
         public ARTrackedImageEventManager arTrackedImageEventManager;
-        public ARTrackedImageReferenceManager arTrackedImageReferenceManager;
 
         public Camera arCamera;
 
@@ -27,9 +25,8 @@ namespace Hado.ARFoundation
         private const string DummyBlackCanvasName = "DummyBlackCanvas";
         private GameObject _dummyBlackCanvas;
 
-        public int CurrentMarkerSetNumber { get; set; } = 0;
-
-        private bool IsUsingImageTracking => arTrackedImageReferenceManager.MarkerSets.Length > 0;
+        //private bool IsUsingImageTracking => arTrackedImageReferenceManager.MarkerSets.Length > 0;
+        private bool IsUsingImageTracking => ARMarkerManager.Instance.ARMarkerSetList.Length > 0;
 
         public void Init(GameObject go)
         {
@@ -42,7 +39,8 @@ namespace Hado.ARFoundation
 
             _dummyBlackCanvas = Resources.Load<GameObject>(DummyBlackCanvasName);
 
-            _arTrackedImageManager.referenceLibrary = arTrackedImageReferenceManager.GetMarkerSet(0);
+            _arTrackedImageManager.referenceLibrary = ARMarkerManager.Instance.CurrentReferenceLibrary;
+
         }
 
         public async UniTask PowerOffAsync()
@@ -122,16 +120,14 @@ namespace Hado.ARFoundation
                 _arTrackedImageManager.enabled = value;
                 arTrackedImageEventManager.enabled = value;
                 
-                if (value && ImageTargetOffsetMaster.ImageTargets == null)
-                    throw new Exception("ImageTargetOffsetMaster.ImageTargets has no data");
+                if (value && ARMarkerManager.Instance.ARMarkerSetList.Length < 1)
+                    throw new Exception("ARMarkerSetList is not set.");
             }
         }
 
-        public async UniTask ChangeMarkerSet(int num, bool restart = true)
+        public async UniTask ChangeMarkerSet(string markerSetName, bool restart = true)
         {
-            _arTrackedImageManager.referenceLibrary = arTrackedImageReferenceManager.GetMarkerSet(num);
-
-            CurrentMarkerSetNumber = num;
+            ARMarkerManager.Instance.ChangeMarkerSet(_arTrackedImageManager, markerSetName);
 
             if (restart)
             {
@@ -151,8 +147,6 @@ namespace Hado.ARFoundation
             _arInputManager = _arSessionManagerGameObject.GetComponentInChildren<ARInputManager>();
             _arTrackedImageManager = _arSessionManagerGameObject.GetComponentInChildren<ARTrackedImageManager>();
             arTrackedImageEventManager = _arSessionManagerGameObject.GetComponentInChildren<ARTrackedImageEventManager>();
-            arTrackedImageReferenceManager =
-                _arSessionManagerGameObject.GetComponentInChildren<ARTrackedImageReferenceManager>();
             
             arCamera = _arSessionManagerGameObject.GetComponentInChildren<Camera>();
 
@@ -177,9 +171,6 @@ namespace Hado.ARFoundation
             if(arTrackedImageEventManager == null)
                 throw new Exception("ARTrackedImageEventManager not found.");
             
-            if(arTrackedImageReferenceManager == null)
-                throw new Exception("ARTrackedImageReferenceManager not found.");
-
             if (arCamera == null)
                 throw new Exception("Camera not found.");
         }

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -7,7 +6,6 @@ using UnityEngine;
 using UniRx;
 using Cysharp.Threading.Tasks;
 using UnityEngine.XR.ARFoundation;
-using UnityEngine.XR.ARSubsystems;
 
 namespace Hado.ARFoundation
 {
@@ -20,27 +18,18 @@ namespace Hado.ARFoundation
     
     public class WorldAnchorManager : MonoBehaviour
     {
-        /// <summary>
+        // 移動時間
+        private const float MoveTime = 1.5f;
+        
         /// フレーム間の移動距離がこの値より大きい場合はノイズとして捨てる
-        /// </summary>
         [NonSerialized] public float MovingNoiseThreshold = 0.05f;
 
-        /// <summary>
         /// MovingNoiseThresholdのチェックを何回ぶん行うか
-        /// </summary>
         [NonSerialized] public int NoiseCheckSampleCount = 2;
 
-        /// <summary>
-        /// 1fなら1秒かける、というわけでもない（ちょっと長い）, 1.5f前後で調整推奨
-        /// </summary>
-        [NonSerialized] public float SmoothTime = 1.5f;
+        private readonly List<float> _noiseCheckSamples = new List<float>();
 
-        private Vector3 _moveEndPosition;
-        private Quaternion _moveEndRotation;
-
-        private List<float> _noiseCheckSamples = new List<float>();
-
-        public ReactiveProperty<MovingStatus> IsMoving = new ReactiveProperty<MovingStatus>(MovingStatus.None);
+        public ReactiveProperty<MovingStatus> IsMoving { get; } = new ReactiveProperty<MovingStatus>(MovingStatus.None);
 
         private void Awake()
         {
@@ -49,6 +38,8 @@ namespace Hado.ARFoundation
 
         private void Start()
         {
+            var moveStartTransform = gameObject.transform;
+            
             ARSessionManager.Instance.arTrackedImageEventManager.OnTrackedImagesChangedObservable
                 .Where(_ => IsMoving.Value == MovingStatus.None) // 補正中は流さない
                 .Do(t => PositionManager.Instance.LastDetectedAnchorName = t.referenceImage.name)
@@ -70,15 +61,12 @@ namespace Hado.ARFoundation
                         return;
                     };
 
-                    _moveEndPosition = positions[2];
-                    _moveEndRotation =
+                    var moveEndRotation =
                         ARSessionManager.Instance.arTrackedImageEventManager.GetReferenceAnchor(PositionManager.Instance
                             .LastDetectedAnchorName).transform.rotation;
                     
-                    IsMoving.Value = MovingStatus.Moving;
                     
-                    LeanTween.move(gameObject, _moveEndPosition, SmoothTime).setEaseOutQuint().setOnComplete(() => IsMoving.Value = MovingStatus.None );
-                    LeanTween.rotate(gameObject, _moveEndRotation.eulerAngles, SmoothTime).setEaseOutQuint();
+                    MoveToX(moveStartTransform.position, moveStartTransform.rotation, positions[2], moveEndRotation);
                     
                 }).AddTo(this);
         }
@@ -122,6 +110,33 @@ namespace Hado.ARFoundation
             while (IsMoving.Value == MovingStatus.Moving)
             {
                 await UniTask.NextFrame();
+            }
+        }
+        
+        private async UniTask MoveToX(Vector3 startPos, Quaternion startRot, Vector3 endPos, Quaternion endRot)
+        {
+            IsMoving.Value = MovingStatus.Moving;
+
+            var x = 0f;
+
+            while (IsMoving.Value == MovingStatus.Moving)
+            {
+                x += Time.deltaTime / MoveTime;
+
+                var lerpPoint = (float)(1 - Math.Pow(1 - x, 5));
+            
+                Debug.Log($"{x}:{lerpPoint}");
+
+                if (lerpPoint > 1)
+                {
+                    IsMoving.Value = MovingStatus.None;
+                    lerpPoint = 1f;
+                }
+
+                gameObject.transform.position = Vector3.Lerp(startPos, endPos, lerpPoint);
+                gameObject.transform.rotation = Quaternion.Lerp(startRot, endRot, lerpPoint);
+
+                await UniTask.WaitForEndOfFrame();
             }
         }
     }

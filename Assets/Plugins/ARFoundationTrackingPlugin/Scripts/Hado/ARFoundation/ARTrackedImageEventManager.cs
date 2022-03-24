@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.XR.ARSubsystems;
 using UnityEngine.XR.ARFoundation;
 using UniRx;
@@ -72,12 +70,12 @@ namespace Hado.ARFoundation
             var markerName = trackedImage.referenceImage.name;
             var anchor = trackedImage.GetComponentInChildren<Anchor>();
             anchor.Name = markerName;
-            var offset = ImageTargetOffsetMaster.FindItem(markerName);
-            var m = Matrix4x4.TRS(offset.position, offset.rotation, Vector3.one).inverse;
+            var offset = ARMarkerManager.Instance.GetOffsetByMarkerName(markerName);
+            var m = Matrix4x4.TRS(offset.Position, offset.Rotation, Vector3.one).inverse;
 
             var t = anchor.gameObject.transform;
             t.localPosition = m.MultiplyPoint3x4(t.localPosition);
-            t.rotation *= Quaternion.Inverse(offset.rotation);
+            t.rotation *= Quaternion.Inverse(offset.Rotation);
 
             _detectedReferenceAnchors.Add(markerName, anchor.gameObject);
         }
