@@ -127,8 +127,7 @@ namespace Hado.ARFoundation
 
         public async UniTask ChangeMarkerSet(string markerSetName, bool restart = true)
         {
-            ARMarkerManager.Instance.ChangeMarkerSet(markerSetName);
-            _arTrackedImageManager.referenceLibrary = ARMarkerManager.Instance.CurrentReferenceLibrary;
+            ARMarkerManager.Instance.ChangeMarkerSet(_arTrackedImageManager, markerSetName);
 
             if (restart)
             {
