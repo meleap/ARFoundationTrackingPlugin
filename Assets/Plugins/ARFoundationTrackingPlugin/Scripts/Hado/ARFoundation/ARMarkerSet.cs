@@ -14,7 +14,7 @@ namespace Hado.ARFoundation
 
         public List<ARMarkerOffset> Offsets => offsets.ToList();
 
-        [SerializeField] public string setName;
+        [SerializeField] private string setName;
         [SerializeField] private XRReferenceImageLibrary library;
         [SerializeField] private ARMarkerOffset[] offsets;
     }
