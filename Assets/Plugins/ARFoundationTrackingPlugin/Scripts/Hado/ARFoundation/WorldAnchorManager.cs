@@ -18,14 +18,8 @@ namespace Hado.ARFoundation
     
     public class WorldAnchorManager : MonoBehaviour
     {
-        // 等速移動中の速度
-        private const float LERP_SPEED = 2f;
-    
-        // ここまで移動したら速度落とす(0 ~ 1f)
-        private const float SPEED_DOWN_POINT = 0.8f;
-    
-        // 減速値 = _lerpSpeed / SPEED_DOWN_VALUE
-        private const float SPEED_DOWN_VALUE = 50f;
+        // 移動時間
+        private const float MoveTime = 1.5f;
         
         /// フレーム間の移動距離がこの値より大きい場合はノイズとして捨てる
         [NonSerialized] public float MovingNoiseThreshold = 0.05f;
@@ -71,7 +65,6 @@ namespace Hado.ARFoundation
                         ARSessionManager.Instance.arTrackedImageEventManager.GetReferenceAnchor(PositionManager.Instance
                             .LastDetectedAnchorName).transform.rotation;
                     
-                    IsMoving.Value = MovingStatus.Moving;
                     
                     MoveToX(moveStartTransform.position, moveStartTransform.rotation, positions[2], moveEndRotation);
                     
@@ -120,38 +113,29 @@ namespace Hado.ARFoundation
             }
         }
         
-        private async void MoveToX(Vector3 startPos, Quaternion startRot, Vector3 endPos, Quaternion endRot)
+        private async UniTask MoveToX(Vector3 startPos, Quaternion startRot, Vector3 endPos, Quaternion endRot)
         {
-            var lerpPoint = 0f;
-            var lerpSpeed = LERP_SPEED; 
-        
+            IsMoving.Value = MovingStatus.Moving;
+
+            var x = 0f;
+
             while (IsMoving.Value == MovingStatus.Moving)
             {
+                x += Time.deltaTime / MoveTime;
 
-                var x = Time.deltaTime;
-                if (lerpPoint <= SPEED_DOWN_POINT)
-                {
-                    // ここまでは等速で動く
-                    lerpPoint += lerpSpeed * x;
-                }
-                else
-                {
-                    // ここからは減速させる(0.1よりは下がらない）
-                    if(lerpSpeed > 0.1)
-                        lerpSpeed -= lerpSpeed / SPEED_DOWN_VALUE;
-                    lerpPoint += lerpSpeed * x;
-                }
-                //Debug.Log($"speed={speed}:leapPoint={lerpPoint}");
+                var lerpPoint = (float)(1 - Math.Pow(1 - x, 5));
             
+                Debug.Log($"{x}:{lerpPoint}");
+
                 if (lerpPoint > 1)
                 {
                     IsMoving.Value = MovingStatus.None;
                     lerpPoint = 1f;
                 }
-            
+
                 gameObject.transform.position = Vector3.Lerp(startPos, endPos, lerpPoint);
-                gameObject.transform.rotation = Quaternion.Lerp(startRot, endRot,lerpPoint);
-            
+                gameObject.transform.rotation = Quaternion.Lerp(startRot, endRot, lerpPoint);
+
                 await UniTask.WaitForEndOfFrame();
             }
         }
