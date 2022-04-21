@@ -47,7 +47,6 @@ namespace Hado.ARFoundation
 
         public async UniTask PowerOffAsync()
         {
-            arCamera.enabled = false;
             EnabledPositionTracking = false;
             EnabledImageTracking = false;
             arTrackedImageEventManager.Clear();
@@ -56,6 +55,8 @@ namespace Hado.ARFoundation
             _arSession.Reset();
             await UniTask.Delay(300);
             _arSession.enabled = false;
+            // cameraをfalseにすると、iPhoneSE3からピンク画面となってしまったため、処理の最後にfalseするように変更
+            arCamera.enabled = false;
         }
 
         public async UniTask PowerOnAsync(bool enableCamera = true, bool autoFocus = false, int warmupDelay = 1000)
