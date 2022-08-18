@@ -25,9 +25,6 @@ namespace Hado.ARFoundation
         private const string DummyBlackCanvasName = "DummyBlackCanvas";
         private GameObject _dummyBlackCanvas;
 
-        //private bool IsUsingImageTracking => arTrackedImageReferenceManager.MarkerSets.Length > 0;
-        private bool IsUsingImageTracking => ARMarkerManager.Instance.ARMarkerSetList.Length > 0;
-
         public void Init(GameObject go)
         {
             FindObjectsAndComponents(go);
@@ -56,7 +53,7 @@ namespace Hado.ARFoundation
             _arSession.enabled = false;
         }
 
-        public async UniTask PowerOnAsync(bool enableCamera = true, bool autoFocus = false, int warmupDelay = 1000)
+        public async UniTask PowerOnAsync(bool enableCamera = true, bool autoFocus = false, int warmupDelay = 1000, bool enableImageTracking = true)
         {
             // ARCameraを起動したときに前回のラストフレームが一瞬描写される。それを隠すための黒キャンバス
             var ui = GameObject.Instantiate(_dummyBlackCanvas, arCamera.transform);
@@ -66,7 +63,7 @@ namespace Hado.ARFoundation
 
             arCameraManager.enabled = true;
             EnabledPositionTracking = true;
-            EnabledImageTracking = IsUsingImageTracking;
+            EnabledImageTracking = enableImageTracking;
             _arSession.enabled = true;
 
             await UniTask.Delay(warmupDelay);
@@ -97,7 +94,6 @@ namespace Hado.ARFoundation
             
             await WaitForARSessionReady();
             
-            EnabledImageTracking = IsUsingImageTracking;
             EnabledPositionTracking = true;
             
             await WaitForARSessionReady();
