@@ -17,6 +17,11 @@ namespace Hado.ARFoundation
         [SerializeField] private string setName;
         [SerializeField] private XRReferenceImageLibrary library;
         [SerializeField] private ARMarkerOffset[] offsets;
+        
+        public void ReplaceOffsetList(ARMarkerOffset[] newOffsets)
+        {
+            offsets = newOffsets;
+        }
     }
 
     [Serializable]
@@ -25,7 +30,14 @@ namespace Hado.ARFoundation
         public string MarkerName => markerName;
         public Vector3 Position => position;
         public Quaternion Rotation => Quaternion.Euler(rotation);
-        
+
+        public ARMarkerOffset(string name, Vector3 pos, Vector3 rot)
+        {
+            markerName = name;
+            position = pos;
+            rotation = rot;
+        }
+
         [SerializeField] private string markerName;
         [SerializeField] private Vector3 position;
         [SerializeField] private Vector3 rotation;
