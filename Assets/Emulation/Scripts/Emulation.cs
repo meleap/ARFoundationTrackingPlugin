@@ -1,10 +1,15 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using Hado.ARFoundation;
 
+/// <summary>
+/// マーカー認識したらOffsetを使ってAnchorの位置をセットする部分を
+/// マーカー認識部分をエミュレーションしつつ実装
+/// </summary>
 public class Emulation : MonoBehaviour
 {
     [SerializeField]
@@ -46,6 +51,18 @@ public class Emulation : MonoBehaviour
     private void Start()
     {
         ARSessionManager.Instance.ChangeMarkerSet("Eye");
+
+        /*
+        // Offsetをあとから差し替える部分のテスト
+        var oldList = ARMarkerManager.Instance.ARMarkerSetList;
+        var red2 = oldList.FirstOrDefault(x => x.SetName == "Eye");
+
+        var newOffsetList = new []
+        {
+            new ARMarkerOffset("PvP_Marker_2_Red", new Vector3(1, 2, 3), new Vector3(-90, 0, 0))
+        };
+        red2.ReplaceOffsetList(newOffsetList);
+        */
     }
 
     public void DetectedRed()
@@ -125,5 +142,7 @@ public class Emulation : MonoBehaviour
         var t = anchor.gameObject.transform;
         t.localPosition = m.MultiplyPoint3x4(t.localPosition);
         t.rotation = t.rotation * Quaternion.Inverse(offset.Rotation);
+        
+        Debug.Log($"{anchor.Name} offset: {anchor.gameObject.transform.localPosition.ToString()}");
     }
 }
