@@ -47,7 +47,7 @@ namespace Hado.ARFoundation
                 .Select(t =>
                     ARSessionManager.Instance.arTrackedImageEventManager.GetReferenceAnchor(t.referenceImage.name)
                         .transform.position)
-                .Where(_ => ARSession.state >= ARSessionState.SessionTracking)
+                .Where(_ => ARSession.state >= ARSessionState.SessionInitializing)
                 .Buffer(NoiseCheckSampleCount + 1)
                 .Subscribe(positions =>
                 {
