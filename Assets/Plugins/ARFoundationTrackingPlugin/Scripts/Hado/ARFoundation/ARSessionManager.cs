@@ -64,6 +64,9 @@ namespace Hado.ARFoundation
             // ARCameraを起動したときに前回のラストフレームが一瞬描写される。それを隠すための黒キャンバス
             var ui = GameObject.Instantiate(_dummyBlackCanvas, arCamera.transform);
             
+            ui.GetComponent<Canvas>().worldCamera = arCamera;
+            ui.GetComponent<Canvas>().planeDistance = 1f; 
+            
             if (enableCamera)
                 arCamera.enabled = true;
 
