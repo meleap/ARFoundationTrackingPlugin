@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 2925394164148537213}
   - component: {fileID: 6215556667984833495}
   - component: {fileID: 5530757748504915156}
-  m_Layer: 5
+  m_Layer: 0
   m_Name: DummyBlackCanvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -110,7 +110,7 @@ GameObject:
   - component: {fileID: 743618919078406565}
   - component: {fileID: 2134232725912339634}
   - component: {fileID: 5492723174715435523}
-  m_Layer: 5
+  m_Layer: 0
   m_Name: Panel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
