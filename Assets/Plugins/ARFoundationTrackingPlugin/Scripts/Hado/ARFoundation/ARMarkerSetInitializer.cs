@@ -22,7 +22,7 @@ namespace Hado.ARFoundation
         {
             // とりあえず先頭をデフォルトに設定
             if(ARMarkerManager.Instance.CurrentReferenceLibrary == null)
-                ARSessionManager.Instance.ChangeMarkerSet(arMarkers[0].SetName).Forget();
+                ARSessionManager.Instance.ChangeMarkerSet(arMarkers[0].SetName, false).Forget();
 
         }
     }
