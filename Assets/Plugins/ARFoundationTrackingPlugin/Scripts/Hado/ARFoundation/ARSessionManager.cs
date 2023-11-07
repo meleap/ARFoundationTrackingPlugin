@@ -2,41 +2,43 @@
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 using Cysharp.Threading.Tasks;
+using UnityEngine.Serialization;
 
 namespace Hado.ARFoundation
 {
-    public class ARSessionManager
+    public class ARSessionManager : MonoBehaviour
     {
-        private GameObject _arSessionManagerGameObject;
-        private GameObject _arSessionOriginGameObject;
-        private GameObject _arSessionGameObject;
-
-        public ARCameraManager arCameraManager;
-        private ARSession _arSession;
-        private ARInputManager _arInputManager;
-        private ARTrackedImageManager _arTrackedImageManager;
+        [SerializeField] private GameObject xrOriginGameObject;
+        [SerializeField] private ARInputManager arInputManager;
+        [SerializeField] private ARTrackedImageManager arTrackedImageManager;
+        [SerializeField] private ARSession arSession;
         
-        public ARTrackedImageEventManager arTrackedImageEventManager;
+        [SerializeField] public ARCameraManager arCameraManager;
+        [SerializeField] public ARTrackedImageEventManager arTrackedImageEventManager;
+        [SerializeField] public Camera arCamera;
 
-        public Camera arCamera;
-
-        public static ARSessionManager Instance { get; } = new ARSessionManager();
+        public static ARSessionManager Instance { get; private set; }
 
         private const string DummyBlackCanvasName = "DummyBlackCanvas";
         private GameObject _dummyBlackCanvas;
 
-        public void Init(GameObject go)
+        private void Awake()
         {
-            FindObjectsAndComponents(go);
-            _arSessionManagerGameObject.SetActive(true);
+            Instance = this;
+
+            CheckComponents();
             
+            Init();
+        }
+
+        private void Init()
+        {
             arCamera.enabled = false;
-            _arSession.enabled = false;
-            _arInputManager.enabled = false;
+            arSession.enabled = false;
+            arInputManager.enabled = false;
 
             _dummyBlackCanvas = Resources.Load<GameObject>(DummyBlackCanvasName);
-
-            _arTrackedImageManager.referenceLibrary = ARMarkerManager.Instance.CurrentReferenceLibrary;
+            arTrackedImageManager.referenceLibrary = ARMarkerManager.Instance.CurrentReferenceLibrary;
 
         }
 
@@ -47,9 +49,9 @@ namespace Hado.ARFoundation
             arTrackedImageEventManager.Clear();
 
             await UniTask.Delay(300);
-            _arSession.Reset();
+            arSession.Reset();
             await UniTask.Delay(300);
-            _arSession.enabled = false;
+            arSession.enabled = false;
             arCamera.enabled = false;
         }
 
@@ -67,7 +69,7 @@ namespace Hado.ARFoundation
             arCameraManager.enabled = true;
             EnabledPositionTracking = true;
             EnabledImageTracking = enableImageTracking;
-            _arSession.enabled = true;
+            arSession.enabled = true;
 
             await UniTask.Delay(warmupDelay);
             
@@ -82,7 +84,7 @@ namespace Hado.ARFoundation
         public void ResetSession()
         {
             arTrackedImageEventManager.Clear();
-            _arSession.Reset();
+            arSession.Reset();
         }
 
         public async UniTask ResetSessionAsync()
@@ -93,7 +95,7 @@ namespace Hado.ARFoundation
             await WaitForARSessionReady();
             
             arTrackedImageEventManager.Clear();
-            _arSession.Reset();
+            arSession.Reset();
             
             await WaitForARSessionReady();
             
@@ -109,14 +111,14 @@ namespace Hado.ARFoundation
 
         public bool EnabledPositionTracking
         {
-            set => _arInputManager.enabled = value;
+            set => arInputManager.enabled = value;
         }
 
         public bool EnabledImageTracking
         {
             set
             {
-                _arTrackedImageManager.enabled = value;
+                arTrackedImageManager.enabled = value;
                 arTrackedImageEventManager.enabled = value;
                 
                 if (value && ARMarkerManager.Instance.ARMarkerSetList.Length < 1)
@@ -126,7 +128,7 @@ namespace Hado.ARFoundation
 
         public async UniTask ChangeMarkerSet(string markerSetName, bool restart = true)
         {
-            ARMarkerManager.Instance.ChangeMarkerSet(_arTrackedImageManager, markerSetName);
+            ARMarkerManager.Instance.ChangeMarkerSet(arTrackedImageManager, markerSetName);
 
             if (restart)
             {
@@ -135,36 +137,18 @@ namespace Hado.ARFoundation
             }
         }
 
-        private void FindObjectsAndComponents(GameObject go)
+        private void CheckComponents()
         {
-            _arSessionManagerGameObject = go;
-            _arSessionOriginGameObject = go.transform.Find("AR Session Origin").gameObject;
-            _arSessionGameObject = go.transform.Find("AR Session").gameObject;
+            if (xrOriginGameObject == null)
+                throw new Exception("GameObject XR Origin not found.");
 
-            arCameraManager = _arSessionManagerGameObject.GetComponentInChildren<ARCameraManager>();
-            _arSession = _arSessionManagerGameObject.GetComponentInChildren<ARSession>();
-            _arInputManager = _arSessionManagerGameObject.GetComponentInChildren<ARInputManager>();
-            _arTrackedImageManager = _arSessionManagerGameObject.GetComponentInChildren<ARTrackedImageManager>();
-            arTrackedImageEventManager = _arSessionManagerGameObject.GetComponentInChildren<ARTrackedImageEventManager>();
-            
-            arCamera = _arSessionManagerGameObject.GetComponentInChildren<Camera>();
-
-
-            if (_arSessionOriginGameObject == null)
-                throw new Exception("GameObject AR Session Origin not found.");
-            if (_arSessionGameObject == null)
-                throw new Exception("GameObject AR Session not found.");
-
-            if (arCameraManager == null)
-                throw new Exception("ARCameraManager not found.");
-
-            if (_arSession == null)
+            if (arSession == null)
                 throw new Exception("ARSession not found.");
 
-            if (_arInputManager == null)
+            if (arInputManager == null)
                 throw new Exception("ARInputManager not found.");
             
-            if(_arTrackedImageManager == null)
+            if(arTrackedImageManager == null)
                 throw new Exception("ARTrackedImageManager not found.");
             
             if(arTrackedImageEventManager == null)

@@ -12,7 +12,6 @@ public class Initializer : MonoBehaviour
     {
         Debug.Log("===Init===");
         DontDestroyOnLoad(ARSessionManagerGameObject);
-        ARSessionManager.Instance.Init(ARSessionManagerGameObject);
 
         SceneManager.LoadScene("Ready", LoadSceneMode.Single);
     }
