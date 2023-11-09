@@ -113,6 +113,7 @@ MonoBehaviour:
   arCameraManager: {fileID: 1381326266643589243}
   arTrackedImageEventManager: {fileID: 8382538649621152743}
   arCamera: {fileID: 7541625854733103460}
+  arOcclusionManager: {fileID: 6508151393499144924}
 --- !u!1 &3698506557172742465
 GameObject:
   m_ObjectHideFlags: 0
@@ -126,6 +127,7 @@ GameObject:
   - component: {fileID: 1381326266643589243}
   - component: {fileID: 5225825738519765805}
   - component: {fileID: 1897363137041615993}
+  - component: {fileID: 6508151393499144924}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -324,6 +326,23 @@ MonoBehaviour:
     m_Interactions: 
     m_SingletonActionBindings: []
     m_Flags: 0
+--- !u!114 &6508151393499144924
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3698506557172742465}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b15f82cc229284894964d2d30806969d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_HumanSegmentationStencilMode: 3
+  m_HumanSegmentationDepthMode: 2
+  m_EnvironmentDepthMode: 3
+  m_EnvironmentDepthTemporalSmoothing: 1
+  m_OcclusionPreferenceMode: 1
 --- !u!1 &5876056572530244478
 GameObject:
   m_ObjectHideFlags: 0

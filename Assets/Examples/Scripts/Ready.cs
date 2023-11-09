@@ -29,7 +29,7 @@ public class Ready : MonoBehaviour
     {
         Debug.Log("===OnPressNoFocus===");
         await SceneManager.LoadSceneAsync("SampleScene", LoadSceneMode.Single);
-        await ARSessionManager.Instance.PowerOnAsync();
+        await ARSessionManager.Instance.PowerOnAsync(enableOcclusion: true);
     }
 
     private async UniTask OnPressAutoFocus()
@@ -37,7 +37,7 @@ public class Ready : MonoBehaviour
         Debug.Log("===OnPressAutoFocus===");
 
         SceneManager.LoadSceneAsync("SampleScene", LoadSceneMode.Single);
-        await ARSessionManager.Instance.PowerOnAsync(autoFocus:true);
+        await ARSessionManager.Instance.PowerOnAsync(autoFocus:true, enableOcclusion: true);
 
         Observable.Timer(TimeSpan.FromMilliseconds(1000))
             .Subscribe(_ =>

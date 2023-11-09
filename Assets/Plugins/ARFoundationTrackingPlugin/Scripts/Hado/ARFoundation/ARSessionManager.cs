@@ -17,6 +17,7 @@ namespace Hado.ARFoundation
         [SerializeField] public ARCameraManager arCameraManager;
         [SerializeField] public ARTrackedImageEventManager arTrackedImageEventManager;
         [SerializeField] public Camera arCamera;
+        [SerializeField] public AROcclusionManager arOcclusionManager;
 
         public static ARSessionManager Instance { get; private set; }
 
@@ -74,7 +75,7 @@ namespace Hado.ARFoundation
             arCamera.enabled = false;
         }
 
-        public async UniTask PowerOnAsync(bool enableCamera = true, bool autoFocus = false, int warmupDelay = 1000, bool enableImageTracking = true, CancellationToken ct = default)
+        public async UniTask PowerOnAsync(bool enableCamera = true, bool autoFocus = false, int warmupDelay = 1000, bool enableImageTracking = true, bool enableOcclusion = false, CancellationToken ct = default)
         {
             // ARCameraを起動したときに前回のラストフレームが一瞬描写される。それを隠すための黒キャンバス
             var ui = Instantiate(_dummyBlackCanvas, arCamera.transform);
@@ -83,6 +84,8 @@ namespace Hado.ARFoundation
             ui.GetComponent<Canvas>().planeDistance = 1f;
 
             AutoFocusRequested = autoFocus;
+
+            EnableOcclusion = enableOcclusion;
             
             if (enableCamera)
                 arCamera.enabled = true;
@@ -152,6 +155,11 @@ namespace Hado.ARFoundation
                 if (value && ARMarkerManager.Instance.ARMarkerSetList.Length < 1)
                     throw new Exception("ARMarkerSetList is not set.");
             }
+        }
+
+        public bool EnableOcclusion
+        {
+            set => arOcclusionManager.enabled = value;
         }
 
         public async UniTask ChangeMarkerSet(string markerSetName, bool restart = true)
