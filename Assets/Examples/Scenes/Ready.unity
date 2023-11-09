@@ -300,19 +300,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 229148324}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1321192892}
-        m_TargetAssemblyTypeName: 
-        m_MethodName: OnPressAutoFocus
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &229148324
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -603,19 +591,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 505456073}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1321192892}
-        m_TargetAssemblyTypeName: 
-        m_MethodName: OnPressNoFocus
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &505456073
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -958,3 +934,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7ad6f1e1bb2d44df1b3316cd7e4e4ad6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  btnNoFocus: {fileID: 505456072}
+  btnAutoFocus: {fileID: 229148323}
