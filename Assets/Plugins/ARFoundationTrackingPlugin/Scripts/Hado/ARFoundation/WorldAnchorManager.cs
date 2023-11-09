@@ -125,8 +125,6 @@ namespace Hado.ARFoundation
 
                 var lerpPoint = (float)(1 - Math.Pow(1 - x, 5));
             
-                Debug.Log($"{x}:{lerpPoint}");
-
                 if (lerpPoint > 1)
                 {
                     IsMoving.Value = MovingStatus.None;
