@@ -80,7 +80,9 @@ namespace Hado.ARFoundation
             var ui = Instantiate(_dummyBlackCanvas, arCamera.transform);
             
             ui.GetComponent<Canvas>().worldCamera = arCamera;
-            ui.GetComponent<Canvas>().planeDistance = 1f; 
+            ui.GetComponent<Canvas>().planeDistance = 1f;
+
+            AutoFocusRequested = autoFocus;
             
             if (enableCamera)
                 arCamera.enabled = true;
