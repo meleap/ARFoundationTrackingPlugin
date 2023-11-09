@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 using Cysharp.Threading.Tasks;
@@ -42,23 +43,33 @@ namespace Hado.ARFoundation
 
         }
 
-        public async UniTask PowerOffAsync()
+        public async UniTask PowerOffAsync(CancellationToken ct = default)
         {
             EnabledPositionTracking = false;
             EnabledImageTracking = false;
             arTrackedImageEventManager.Clear();
 
-            await UniTask.Delay(300);
-            arSession.Reset();
-            await UniTask.Delay(300);
+            try
+            {
+                await UniTask.Delay(300, cancellationToken: ct);
+                arSession.Reset();
+                await UniTask.Delay(300, cancellationToken: ct);
+            }
+            catch (OperationCanceledException e)
+            {
+                arSession.enabled = false;
+                arCamera.enabled = false;
+                throw new OperationCanceledException(e.Message);
+            }
+            
             arSession.enabled = false;
             arCamera.enabled = false;
         }
 
-        public async UniTask PowerOnAsync(bool enableCamera = true, bool autoFocus = false, int warmupDelay = 1000, bool enableImageTracking = true)
+        public async UniTask PowerOnAsync(bool enableCamera = true, bool autoFocus = false, int warmupDelay = 1000, bool enableImageTracking = true, CancellationToken ct = default)
         {
             // ARCameraを起動したときに前回のラストフレームが一瞬描写される。それを隠すための黒キャンバス
-            var ui = GameObject.Instantiate(_dummyBlackCanvas, arCamera.transform);
+            var ui = Instantiate(_dummyBlackCanvas, arCamera.transform);
             
             ui.GetComponent<Canvas>().worldCamera = arCamera;
             ui.GetComponent<Canvas>().planeDistance = 1f; 
@@ -71,11 +82,19 @@ namespace Hado.ARFoundation
             EnabledImageTracking = enableImageTracking;
             arSession.enabled = true;
 
-            await UniTask.Delay(warmupDelay);
+            try
+            {
+                await UniTask.Delay(warmupDelay, cancellationToken: ct);
+            }
+            catch (OperationCanceledException e)
+            {
+                Destroy(ui);
+                throw new OperationCanceledException(e.Message);
+            }
             
-            GameObject.Destroy(ui);
+            Destroy(ui);
 
-            await UniTask.NextFrame();
+            await UniTask.NextFrame(cancellationToken: ct);
 
             if(autoFocus)
                 AutoFocusRequested = true;
@@ -87,21 +106,20 @@ namespace Hado.ARFoundation
             arSession.Reset();
         }
 
-        public async UniTask ResetSessionAsync()
+        public async UniTask ResetSessionAsync(CancellationToken ct = default)
         {
             EnabledImageTracking = false;
             EnabledPositionTracking = false;
             
-            await WaitForARSessionReady();
+            await UniTask.WaitWhile(() => ARSession.state != ARSessionState.SessionTracking, cancellationToken: ct);
             
             arTrackedImageEventManager.Clear();
             arSession.Reset();
             
-            await WaitForARSessionReady();
+            await UniTask.WaitWhile(() => ARSession.state != ARSessionState.SessionTracking, cancellationToken: ct);
             
             EnabledPositionTracking = true;
-            
-            await WaitForARSessionReady();
+            await UniTask.WaitWhile(() => ARSession.state != ARSessionState.SessionTracking, cancellationToken: ct);
         }
 
         public bool AutoFocusRequested
@@ -156,17 +174,6 @@ namespace Hado.ARFoundation
             
             if (arCamera == null)
                 throw new Exception("Camera not found.");
-        }
-        
-        private async UniTask WaitForARSessionReady()
-        {
-            Debug.Log($"Start WaitFor: {ARSession.state}");
-
-            while (ARSession.state != ARSessionState.SessionTracking)
-            {
-                Debug.Log($"Waiting: {ARSession.state}");
-                await UniTask.NextFrame();
-            }
         }
     }
 }
