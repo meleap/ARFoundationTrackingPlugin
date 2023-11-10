@@ -1,65 +1,92 @@
 ﻿using System;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 using Cysharp.Threading.Tasks;
+using UnityEngine.Serialization;
 
 namespace Hado.ARFoundation
 {
-    public class ARSessionManager
+    public class ARSessionManager : MonoBehaviour
     {
-        private GameObject _arSessionManagerGameObject;
-        private GameObject _arSessionOriginGameObject;
-        private GameObject _arSessionGameObject;
-
-        public ARCameraManager arCameraManager;
-        private ARSession _arSession;
-        private ARInputManager _arInputManager;
-        private ARTrackedImageManager _arTrackedImageManager;
+        [SerializeField] private GameObject xrOriginGameObject;
+        [SerializeField] private ARInputManager arInputManager;
+        [SerializeField] private ARTrackedImageManager arTrackedImageManager;
+        [SerializeField] private ARSession arSession;
         
-        public ARTrackedImageEventManager arTrackedImageEventManager;
+        [SerializeField] public ARCameraManager arCameraManager;
+        [SerializeField] public ARTrackedImageEventManager arTrackedImageEventManager;
+        [SerializeField] public Camera arCamera;
+        [SerializeField] public AROcclusionManager arOcclusionManager;
 
-        public Camera arCamera;
-
-        public static ARSessionManager Instance { get; } = new ARSessionManager();
+        public static ARSessionManager Instance { get; private set; }
 
         private const string DummyBlackCanvasName = "DummyBlackCanvas";
         private GameObject _dummyBlackCanvas;
 
-        public void Init(GameObject go)
+        private void Awake()
         {
-            FindObjectsAndComponents(go);
-            _arSessionManagerGameObject.SetActive(true);
+            if (Instance == null)
+            {
+                Instance = this;
+                DontDestroyOnLoad(gameObject);
+            } else if (Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            CheckComponents();
             
+            Init();
+        }
+
+        private void Init()
+        {
             arCamera.enabled = false;
-            _arSession.enabled = false;
-            _arInputManager.enabled = false;
+            arSession.enabled = false;
+            arInputManager.enabled = false;
 
             _dummyBlackCanvas = Resources.Load<GameObject>(DummyBlackCanvasName);
-
-            _arTrackedImageManager.referenceLibrary = ARMarkerManager.Instance.CurrentReferenceLibrary;
+            arTrackedImageManager.referenceLibrary = ARMarkerManager.Instance.CurrentReferenceLibrary;
 
         }
 
-        public async UniTask PowerOffAsync()
+        public async UniTask PowerOffAsync(CancellationToken ct = default)
         {
             EnabledPositionTracking = false;
             EnabledImageTracking = false;
             arTrackedImageEventManager.Clear();
 
-            await UniTask.Delay(300);
-            _arSession.Reset();
-            await UniTask.Delay(300);
-            _arSession.enabled = false;
+            try
+            {
+                await UniTask.Delay(300, cancellationToken: ct);
+                arSession.Reset();
+                await UniTask.Delay(300, cancellationToken: ct);
+            }
+            catch (OperationCanceledException e)
+            {
+                arSession.Reset();
+                arSession.enabled = false;
+                arCamera.enabled = false;
+                throw new OperationCanceledException(e.Message);
+            }
+            
+            arSession.enabled = false;
             arCamera.enabled = false;
         }
 
-        public async UniTask PowerOnAsync(bool enableCamera = true, bool autoFocus = false, int warmupDelay = 1000, bool enableImageTracking = true)
+        public async UniTask PowerOnAsync(bool enableCamera = true, bool autoFocus = false, int warmupDelay = 1000, bool enableImageTracking = true, bool enableOcclusion = false, CancellationToken ct = default)
         {
             // ARCameraを起動したときに前回のラストフレームが一瞬描写される。それを隠すための黒キャンバス
-            var ui = GameObject.Instantiate(_dummyBlackCanvas, arCamera.transform);
+            var ui = Instantiate(_dummyBlackCanvas, arCamera.transform);
             
             ui.GetComponent<Canvas>().worldCamera = arCamera;
-            ui.GetComponent<Canvas>().planeDistance = 1f; 
+            ui.GetComponent<Canvas>().planeDistance = 1f;
+
+            AutoFocusRequested = autoFocus;
+
+            EnableOcclusion = enableOcclusion;
             
             if (enableCamera)
                 arCamera.enabled = true;
@@ -67,13 +94,21 @@ namespace Hado.ARFoundation
             arCameraManager.enabled = true;
             EnabledPositionTracking = true;
             EnabledImageTracking = enableImageTracking;
-            _arSession.enabled = true;
+            arSession.enabled = true;
 
-            await UniTask.Delay(warmupDelay);
+            try
+            {
+                await UniTask.Delay(warmupDelay, cancellationToken: ct);
+            }
+            catch (OperationCanceledException e)
+            {
+                Destroy(ui);
+                throw new OperationCanceledException(e.Message);
+            }
             
-            GameObject.Destroy(ui);
+            Destroy(ui);
 
-            await UniTask.NextFrame();
+            await UniTask.NextFrame(cancellationToken: ct);
 
             if(autoFocus)
                 AutoFocusRequested = true;
@@ -82,24 +117,23 @@ namespace Hado.ARFoundation
         public void ResetSession()
         {
             arTrackedImageEventManager.Clear();
-            _arSession.Reset();
+            arSession.Reset();
         }
 
-        public async UniTask ResetSessionAsync()
+        public async UniTask ResetSessionAsync(CancellationToken ct = default)
         {
             EnabledImageTracking = false;
             EnabledPositionTracking = false;
             
-            await WaitForARSessionReady();
+            await UniTask.WaitWhile(() => ARSession.state != ARSessionState.SessionTracking, cancellationToken: ct);
             
             arTrackedImageEventManager.Clear();
-            _arSession.Reset();
+            arSession.Reset();
             
-            await WaitForARSessionReady();
+            await UniTask.WaitWhile(() => ARSession.state != ARSessionState.SessionTracking, cancellationToken: ct);
             
             EnabledPositionTracking = true;
-            
-            await WaitForARSessionReady();
+            await UniTask.WaitWhile(() => ARSession.state != ARSessionState.SessionTracking, cancellationToken: ct);
         }
 
         public bool AutoFocusRequested
@@ -109,14 +143,14 @@ namespace Hado.ARFoundation
 
         public bool EnabledPositionTracking
         {
-            set => _arInputManager.enabled = value;
+            set => arInputManager.enabled = value;
         }
 
         public bool EnabledImageTracking
         {
             set
             {
-                _arTrackedImageManager.enabled = value;
+                arTrackedImageManager.enabled = value;
                 arTrackedImageEventManager.enabled = value;
                 
                 if (value && ARMarkerManager.Instance.ARMarkerSetList.Length < 1)
@@ -124,9 +158,14 @@ namespace Hado.ARFoundation
             }
         }
 
+        public bool EnableOcclusion
+        {
+            set => arOcclusionManager.enabled = value;
+        }
+
         public async UniTask ChangeMarkerSet(string markerSetName, bool restart = true)
         {
-            ARMarkerManager.Instance.ChangeMarkerSet(_arTrackedImageManager, markerSetName);
+            ARMarkerManager.Instance.ChangeMarkerSet(arTrackedImageManager, markerSetName);
 
             if (restart)
             {
@@ -135,36 +174,18 @@ namespace Hado.ARFoundation
             }
         }
 
-        private void FindObjectsAndComponents(GameObject go)
+        private void CheckComponents()
         {
-            _arSessionManagerGameObject = go;
-            _arSessionOriginGameObject = go.transform.Find("AR Session Origin").gameObject;
-            _arSessionGameObject = go.transform.Find("AR Session").gameObject;
+            if (xrOriginGameObject == null)
+                throw new Exception("GameObject XR Origin not found.");
 
-            arCameraManager = _arSessionManagerGameObject.GetComponentInChildren<ARCameraManager>();
-            _arSession = _arSessionManagerGameObject.GetComponentInChildren<ARSession>();
-            _arInputManager = _arSessionManagerGameObject.GetComponentInChildren<ARInputManager>();
-            _arTrackedImageManager = _arSessionManagerGameObject.GetComponentInChildren<ARTrackedImageManager>();
-            arTrackedImageEventManager = _arSessionManagerGameObject.GetComponentInChildren<ARTrackedImageEventManager>();
-            
-            arCamera = _arSessionManagerGameObject.GetComponentInChildren<Camera>();
-
-
-            if (_arSessionOriginGameObject == null)
-                throw new Exception("GameObject AR Session Origin not found.");
-            if (_arSessionGameObject == null)
-                throw new Exception("GameObject AR Session not found.");
-
-            if (arCameraManager == null)
-                throw new Exception("ARCameraManager not found.");
-
-            if (_arSession == null)
+            if (arSession == null)
                 throw new Exception("ARSession not found.");
 
-            if (_arInputManager == null)
+            if (arInputManager == null)
                 throw new Exception("ARInputManager not found.");
             
-            if(_arTrackedImageManager == null)
+            if(arTrackedImageManager == null)
                 throw new Exception("ARTrackedImageManager not found.");
             
             if(arTrackedImageEventManager == null)
@@ -172,17 +193,6 @@ namespace Hado.ARFoundation
             
             if (arCamera == null)
                 throw new Exception("Camera not found.");
-        }
-        
-        private async UniTask WaitForARSessionReady()
-        {
-            Debug.Log($"Start WaitFor: {ARSession.state}");
-
-            while (ARSession.state != ARSessionState.SessionTracking)
-            {
-                Debug.Log($"Waiting: {ARSession.state}");
-                await UniTask.NextFrame();
-            }
         }
     }
 }

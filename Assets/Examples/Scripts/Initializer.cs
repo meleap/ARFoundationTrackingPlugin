@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using Hado.ARFoundation;
 using UnityEngine;
@@ -8,12 +9,9 @@ public class Initializer : MonoBehaviour
 {
     [SerializeField] private GameObject ARSessionManagerGameObject;
     
-    void Awake()
+    private void Awake()
     {
-        Debug.Log("===Init===");
-        DontDestroyOnLoad(ARSessionManagerGameObject);
-        ARSessionManager.Instance.Init(ARSessionManagerGameObject);
-
+        Debug.Log("Load Ready Scene");
         SceneManager.LoadScene("Ready", LoadSceneMode.Single);
     }
 }

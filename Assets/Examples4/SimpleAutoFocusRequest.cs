@@ -21,9 +21,6 @@ public class SimpleAutoFocusRequest : MonoBehaviour
     
     private void Start()
     {
-        ARSessionManager.Instance.Init(arSessionManagerGameObject);
-        
-        
         focusOn.OnClickAsObservable()
             .Subscribe(_ =>
             {

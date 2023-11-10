@@ -56,4 +56,9 @@ public class ARSessionController : MonoBehaviour
     {
         ARSessionManager.Instance.ResetSession();
     }
+
+    public void Occlusion(bool isOn)
+    {
+        ARSessionManager.Instance.EnableOcclusion = isOn;
+    }
 }

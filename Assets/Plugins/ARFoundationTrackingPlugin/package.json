@@ -2,11 +2,11 @@
     "name": "com.meleap.unity.arfoundationtrackingplugin",
     "displayName": "ARFoundationTrackingPlugin",
     "description": "ARFoundation Tracking Plugin",
-    "version": "2.5.4",
-    "unity": "2019.4",
+    "version": "2.6.0",
+    "unity": "2021.3",
     "author": "meleap inc.",
     "license": "MIT",
     "dependencies": {
-        "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask#2.2.5"
+        "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask#2.3.3"
     }
 }
