@@ -66,6 +66,7 @@ namespace Hado.ARFoundation
             }
             catch (OperationCanceledException e)
             {
+                arSession.Reset();
                 arSession.enabled = false;
                 arCamera.enabled = false;
                 throw new OperationCanceledException(e.Message);
