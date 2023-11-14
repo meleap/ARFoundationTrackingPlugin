@@ -5,9 +5,11 @@ using UnityEngine.XR.ARSubsystems;
 
 namespace Hado.ARFoundation
 {
-    public class ARMarkerManager
+    public class ARMarkerManager : MonoBehaviour
     {
-        public static ARMarkerManager Instance { get; } = new ARMarkerManager();
+        [SerializeField] private ARMarkerSet[] arMarkers;
+        
+        public static ARMarkerManager Instance { get; private set; }
 
         public ARMarkerSet[] ARMarkerSetList { get; private set; } = { };
 
@@ -15,10 +17,31 @@ namespace Hado.ARFoundation
 
         public XRReferenceImageLibrary CurrentReferenceLibrary => CurrentMarkerSet?.Library;
         
+        private void Awake()
+        {
+            if (Instance == null)
+            {
+                Instance = this;
+                DontDestroyOnLoad(gameObject);
+            } else if (Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            
+            Init(arMarkers);
+        }
+        
         public void Init(ARMarkerSet[] list)
         {
-            ValidateARMarkerSet(list);
-            ARMarkerSetList = list;
+            if (list.Length == 0)
+            {
+                Debug.LogWarning("ARMarkerSet is not defined");
+            } else {
+                ValidateARMarkerSet(list);
+                ARMarkerSetList = list;
+                CurrentMarkerSet = ARMarkerSetList.FirstOrDefault(x => list[0].SetName == x.SetName);
+            }
         }
 
         public void ChangeMarkerSet(ARTrackedImageManager _arTrackedImageManager, string markerSetName)
