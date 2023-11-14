@@ -38,11 +38,5 @@ public class Ready : MonoBehaviour
 
         SceneManager.LoadSceneAsync("SampleScene", LoadSceneMode.Single);
         await ARSessionManager.Instance.PowerOnAsync(autoFocus:true, enableOcclusion: true);
-
-        Observable.Timer(TimeSpan.FromMilliseconds(1000))
-            .Subscribe(_ =>
-            {
-                
-            });
     }
 }

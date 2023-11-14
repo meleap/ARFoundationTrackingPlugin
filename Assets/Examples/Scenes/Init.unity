@@ -175,6 +175,11 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1381326266643589243, guid: e281dad62f90d4c6fb85fb12451beb7a,
+        type: 3}
+      propertyPath: m_AutoFocus
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1626764311705642708, guid: e281dad62f90d4c6fb85fb12451beb7a,
         type: 3}
       propertyPath: m_RootOrder

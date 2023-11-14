@@ -52,28 +52,15 @@ namespace Hado.ARFoundation
 
         }
 
-        public async UniTask PowerOffAsync(CancellationToken ct = default)
+        public async UniTask PowerOffAsync()
         {
             EnabledPositionTracking = false;
             EnabledImageTracking = false;
             arTrackedImageEventManager.Clear();
-
-            try
-            {
-                await UniTask.Delay(300, cancellationToken: ct);
-                arSession.Reset();
-                await UniTask.Delay(300, cancellationToken: ct);
-            }
-            catch (OperationCanceledException e)
-            {
-                arSession.Reset();
-                arSession.enabled = false;
-                arCamera.enabled = false;
-                throw new OperationCanceledException(e.Message);
-            }
-            
-            arSession.enabled = false;
             arCamera.enabled = false;
+            arCameraManager.enabled = false;
+            
+            await ResetSessionAsync();
         }
 
         public async UniTask PowerOnAsync(bool enableCamera = true, bool autoFocus = false, int warmupDelay = 1000, bool enableImageTracking = true, bool enableOcclusion = false, CancellationToken ct = default)
@@ -109,9 +96,6 @@ namespace Hado.ARFoundation
             Destroy(ui);
 
             await UniTask.NextFrame(cancellationToken: ct);
-
-            if(autoFocus)
-                AutoFocusRequested = true;
         }
 
         public void ResetSession()
@@ -132,6 +116,7 @@ namespace Hado.ARFoundation
             
             await UniTask.WaitWhile(() => ARSession.state != ARSessionState.SessionTracking, cancellationToken: ct);
             
+            EnabledImageTracking = true;
             EnabledPositionTracking = true;
             await UniTask.WaitWhile(() => ARSession.state != ARSessionState.SessionTracking, cancellationToken: ct);
         }
