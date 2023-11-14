@@ -44,18 +44,16 @@ namespace Hado.ARFoundation
         private void Init()
         {
             arCamera.enabled = false;
-            arSession.enabled = false;
             arInputManager.enabled = false;
 
             _dummyBlackCanvas = Resources.Load<GameObject>(DummyBlackCanvasName);
-            arTrackedImageManager.referenceLibrary = ARMarkerManager.Instance.CurrentReferenceLibrary;
-
         }
 
         public async UniTask PowerOffAsync()
         {
             EnabledPositionTracking = false;
             EnabledImageTracking = false;
+            EnableOcclusion = false;
             arTrackedImageEventManager.Clear();
             arCamera.enabled = false;
             arCameraManager.enabled = false;
@@ -65,6 +63,8 @@ namespace Hado.ARFoundation
 
         public async UniTask PowerOnAsync(bool enableCamera = true, bool autoFocus = false, int warmupDelay = 1000, bool enableImageTracking = true, bool enableOcclusion = false, CancellationToken ct = default)
         {
+            arTrackedImageManager.referenceLibrary = ARMarkerManager.Instance.CurrentReferenceLibrary;
+            
             // ARCameraを起動したときに前回のラストフレームが一瞬描写される。それを隠すための黒キャンバス
             var ui = Instantiate(_dummyBlackCanvas, arCamera.transform);
             
@@ -73,7 +73,6 @@ namespace Hado.ARFoundation
 
             AutoFocusRequested = autoFocus;
 
-            EnableOcclusion = enableOcclusion;
             
             if (enableCamera)
                 arCamera.enabled = true;
@@ -81,7 +80,6 @@ namespace Hado.ARFoundation
             arCameraManager.enabled = true;
             EnabledPositionTracking = true;
             EnabledImageTracking = enableImageTracking;
-            arSession.enabled = true;
 
             try
             {
@@ -96,6 +94,8 @@ namespace Hado.ARFoundation
             Destroy(ui);
 
             await UniTask.NextFrame(cancellationToken: ct);
+
+            EnableOcclusion = enableOcclusion;
         }
 
         public void ResetSession()
@@ -135,6 +135,7 @@ namespace Hado.ARFoundation
         {
             set
             {
+                Debug.Log($"Change EnabledImageTracking: {value}");
                 arTrackedImageManager.enabled = value;
                 arTrackedImageEventManager.enabled = value;
                 
