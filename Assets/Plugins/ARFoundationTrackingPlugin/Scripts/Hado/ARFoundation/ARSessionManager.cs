@@ -3,6 +3,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 using Cysharp.Threading.Tasks;
+using UnityEngine.InputSystem.XR;
 using UnityEngine.Serialization;
 
 namespace Hado.ARFoundation
@@ -13,7 +14,7 @@ namespace Hado.ARFoundation
         [SerializeField] private ARInputManager arInputManager;
         [SerializeField] private ARTrackedImageManager arTrackedImageManager;
         [SerializeField] private ARSession arSession;
-        
+        [SerializeField] private TrackedPoseDriver trackedPoseDriver;
         [SerializeField] public ARCameraManager arCameraManager;
         [SerializeField] public ARTrackedImageEventManager arTrackedImageEventManager;
         [SerializeField] public Camera arCamera;
@@ -45,12 +46,14 @@ namespace Hado.ARFoundation
         {
             arCamera.enabled = false;
             arInputManager.enabled = false;
+            trackedPoseDriver.enabled = false;
 
             _dummyBlackCanvas = Resources.Load<GameObject>(DummyBlackCanvasName);
         }
 
         public async UniTask PowerOffAsync()
         {
+            trackedPoseDriver.enabled = false;
             EnabledPositionTracking = false;
             EnabledImageTracking = false;
             EnableOcclusion = false;
@@ -71,6 +74,7 @@ namespace Hado.ARFoundation
 
             AutoFocusRequested = autoFocus;
 
+            trackedPoseDriver.enabled = true;
             
             if (enableCamera)
                 arCamera.enabled = true;
