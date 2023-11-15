@@ -57,8 +57,6 @@ namespace Hado.ARFoundation
             arTrackedImageEventManager.Clear();
             arCamera.enabled = false;
             arCameraManager.enabled = false;
-            
-            await ResetSessionAsync();
         }
 
         public async UniTask PowerOnAsync(bool enableCamera = true, bool autoFocus = false, int warmupDelay = 1000, bool enableImageTracking = true, bool enableOcclusion = false, CancellationToken ct = default)
