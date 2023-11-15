@@ -1,10 +1,12 @@
 {
     "name": "ARFoundationTrackingPlugin",
+    "rootNamespace": "",
     "references": [
         "UniRx",
         "Unity.XR.ARFoundation",
         "Unity.XR.ARSubsystems",
-        "UniTask"
+        "UniTask",
+        "Unity.InputSystem"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
