@@ -55,8 +55,8 @@ namespace Hado.ARFoundation
             EnabledImageTracking = false;
             EnableOcclusion = false;
             arTrackedImageEventManager.Clear();
-            arCameraManager.enabled = false;
             arCamera.enabled = false;
+            arCameraManager.enabled = false;
             
             await ResetSessionAsync();
         }
