@@ -51,7 +51,8 @@ namespace Hado.ARFoundation
             {
                 // 初回だけの処理はここに
                 Debug.Log($"OnTrackedImagesChanged: add: {trackedImage.trackingState}");
-                InitAnchorTransform(trackedImage);
+                if(!_detectedReferenceAnchors.ContainsKey(trackedImage.referenceImage.name))
+                    InitAnchorTransform(trackedImage);
                 _trackImagesChangedSubject.OnNext(trackedImage);
             }
 
