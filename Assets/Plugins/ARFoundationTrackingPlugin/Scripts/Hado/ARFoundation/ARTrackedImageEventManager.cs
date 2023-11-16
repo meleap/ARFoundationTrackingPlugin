@@ -59,6 +59,11 @@ namespace Hado.ARFoundation
             {
                 if (trackedImage.trackingState != TrackingState.Tracking) return;
                 
+                //TODO: 稀に初回detectなのにupdateで渡されることがある
+                if(!_detectedReferenceAnchors.ContainsKey(trackedImage.referenceImage.name))
+                    InitAnchorTransform(trackedImage);
+                    
+                
                 Debug.Log($"OnTrackedImagesChanged: updated: {trackedImage.trackingState}");
                 _trackImagesChangedSubject.OnNext(trackedImage);
             }
