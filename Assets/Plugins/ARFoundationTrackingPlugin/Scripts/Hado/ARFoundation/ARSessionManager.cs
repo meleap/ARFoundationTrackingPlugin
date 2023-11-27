@@ -74,7 +74,8 @@ namespace Hado.ARFoundation
             ui.GetComponent<Canvas>().worldCamera = arCamera;
             ui.GetComponent<Canvas>().planeDistance = 1f;
 
-            AutoFocusRequested = autoFocus;
+            if(autoFocus)
+                AutoFocusRequested = true;
 
             trackedPoseDriver.enabled = true;
             
