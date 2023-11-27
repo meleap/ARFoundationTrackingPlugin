@@ -11,6 +11,8 @@ public class Initializer : MonoBehaviour
     
     private void Awake()
     {
+        Application.targetFrameRate = 60;
+        
         Debug.Log("Load Ready Scene");
         SceneManager.LoadScene("Ready", LoadSceneMode.Single);
     }

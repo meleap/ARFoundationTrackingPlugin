@@ -3,6 +3,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 using Cysharp.Threading.Tasks;
+using UnityEngine.InputSystem.XR;
 using UnityEngine.Serialization;
 
 namespace Hado.ARFoundation
@@ -13,7 +14,7 @@ namespace Hado.ARFoundation
         [SerializeField] private ARInputManager arInputManager;
         [SerializeField] private ARTrackedImageManager arTrackedImageManager;
         [SerializeField] private ARSession arSession;
-        
+        [SerializeField] private TrackedPoseDriver trackedPoseDriver;
         [SerializeField] public ARCameraManager arCameraManager;
         [SerializeField] public ARTrackedImageEventManager arTrackedImageEventManager;
         [SerializeField] public Camera arCamera;
@@ -45,20 +46,22 @@ namespace Hado.ARFoundation
         {
             arCamera.enabled = false;
             arInputManager.enabled = false;
+            trackedPoseDriver.enabled = false;
+            arSession.enabled = false;
+            arCameraManager.enabled = false;
 
             _dummyBlackCanvas = Resources.Load<GameObject>(DummyBlackCanvasName);
         }
 
         public async UniTask PowerOffAsync()
         {
+            trackedPoseDriver.enabled = false;
             EnabledPositionTracking = false;
             EnabledImageTracking = false;
             EnableOcclusion = false;
-            arTrackedImageEventManager.Clear();
             arCamera.enabled = false;
             arCameraManager.enabled = false;
-            
-            await ResetSessionAsync();
+            arSession.enabled = false;
         }
 
         public async UniTask PowerOnAsync(bool enableCamera = true, bool autoFocus = false, int warmupDelay = 1000, bool enableImageTracking = true, bool enableOcclusion = false, CancellationToken ct = default)
@@ -71,8 +74,10 @@ namespace Hado.ARFoundation
             ui.GetComponent<Canvas>().worldCamera = arCamera;
             ui.GetComponent<Canvas>().planeDistance = 1f;
 
-            AutoFocusRequested = autoFocus;
+            if(autoFocus)
+                AutoFocusRequested = true;
 
+            trackedPoseDriver.enabled = true;
             
             if (enableCamera)
                 arCamera.enabled = true;
@@ -81,6 +86,8 @@ namespace Hado.ARFoundation
             EnabledPositionTracking = true;
             EnabledImageTracking = enableImageTracking;
 
+            arSession.enabled = true;
+            
             try
             {
                 await UniTask.Delay(warmupDelay, cancellationToken: ct);

@@ -110,6 +110,7 @@ MonoBehaviour:
   arInputManager: {fileID: 1626764311570657024}
   arTrackedImageManager: {fileID: 4474070048889449679}
   arSession: {fileID: 1626764311570657039}
+  trackedPoseDriver: {fileID: 1897363137041615993}
   arCameraManager: {fileID: 1381326266643589243}
   arTrackedImageEventManager: {fileID: 8382538649621152743}
   arCamera: {fileID: 7541625854733103460}
