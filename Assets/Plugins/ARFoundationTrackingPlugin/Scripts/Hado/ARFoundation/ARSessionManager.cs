@@ -47,6 +47,8 @@ namespace Hado.ARFoundation
             arCamera.enabled = false;
             arInputManager.enabled = false;
             trackedPoseDriver.enabled = false;
+            arSession.enabled = false;
+            arCameraManager.enabled = false;
 
             _dummyBlackCanvas = Resources.Load<GameObject>(DummyBlackCanvasName);
         }
@@ -57,9 +59,9 @@ namespace Hado.ARFoundation
             EnabledPositionTracking = false;
             EnabledImageTracking = false;
             EnableOcclusion = false;
-            ResetSession();
             arCamera.enabled = false;
             arCameraManager.enabled = false;
+            arSession.enabled = false;
         }
 
         public async UniTask PowerOnAsync(bool enableCamera = true, bool autoFocus = false, int warmupDelay = 1000, bool enableImageTracking = true, bool enableOcclusion = false, CancellationToken ct = default)
@@ -83,6 +85,8 @@ namespace Hado.ARFoundation
             EnabledPositionTracking = true;
             EnabledImageTracking = enableImageTracking;
 
+            arSession.enabled = true;
+            
             try
             {
                 await UniTask.Delay(warmupDelay, cancellationToken: ct);
