@@ -135,7 +135,11 @@ namespace Hado.ARFoundation
 
         public bool EnabledPositionTracking
         {
-            set => arInputManager.enabled = value;
+            set
+            {
+                arInputManager.enabled = value;
+                trackedPoseDriver.enabled = value;
+            }
         }
 
         public bool EnabledImageTracking
