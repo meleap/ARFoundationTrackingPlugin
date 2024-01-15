@@ -89,7 +89,7 @@ namespace Hado.ARFoundation
                 arCamera.enabled = true;
 
             arCameraManager.enabled = true;
-            EnabledPositionTracking = enableImageTracking;
+            EnabledPositionTracking = enablePositionTracking;
             EnabledImageTracking = enableImageTracking;
 
             arSession.enabled = true;
