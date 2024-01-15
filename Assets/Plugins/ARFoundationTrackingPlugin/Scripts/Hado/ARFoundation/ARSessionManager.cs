@@ -64,7 +64,13 @@ namespace Hado.ARFoundation
             arSession.enabled = false;
         }
 
-        public async UniTask PowerOnAsync(bool enableCamera = true, bool autoFocus = false, int warmupDelay = 1000, bool enableImageTracking = true, bool enableOcclusion = false, CancellationToken ct = default)
+        public async UniTask PowerOnAsync(bool enableCamera = true, 
+            bool autoFocus = false, 
+            int warmupDelay = 1000, 
+            bool enableImageTracking = true, 
+            bool enableOcclusion = false, 
+            bool enablePositionTracking = true, 
+            CancellationToken ct = default)
         {
             arTrackedImageManager.referenceLibrary = ARMarkerManager.Instance.CurrentReferenceLibrary;
             
@@ -83,7 +89,7 @@ namespace Hado.ARFoundation
                 arCamera.enabled = true;
 
             arCameraManager.enabled = true;
-            EnabledPositionTracking = true;
+            EnabledPositionTracking = enableImageTracking;
             EnabledImageTracking = enableImageTracking;
 
             arSession.enabled = true;
