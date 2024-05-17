@@ -78,6 +78,7 @@ namespace Hado.ARFoundation
             anchor.Name = markerName;
             var offset = ARMarkerManager.Instance.GetOffsetByMarkerName(markerName);
             var m = Matrix4x4.TRS(offset.Position, offset.Rotation, Vector3.one).inverse;
+            Debug.Log($"Anchor Offset: {offset.Position}, {offset.Rotation.eulerAngles}");
 
             var t = anchor.gameObject.transform;
             t.localPosition = m.MultiplyPoint3x4(t.localPosition);
