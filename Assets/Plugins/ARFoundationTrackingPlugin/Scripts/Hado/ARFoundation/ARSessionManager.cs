@@ -55,6 +55,8 @@ namespace Hado.ARFoundation
 
         public async UniTask PowerOffAsync()
         {
+            arTrackedImageEventManager.Clear();
+            arSession.Reset();
             trackedPoseDriver.enabled = false;
             EnabledPositionTracking = false;
             EnabledImageTracking = false;
@@ -62,6 +64,7 @@ namespace Hado.ARFoundation
             arCamera.enabled = false;
             arCameraManager.enabled = false;
             arSession.enabled = false;
+            
         }
 
         public async UniTask PowerOnAsync(bool enableCamera = true, 
