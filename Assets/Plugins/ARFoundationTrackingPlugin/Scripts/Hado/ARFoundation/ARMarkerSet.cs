@@ -12,7 +12,7 @@ namespace Hado.ARFoundation
         public string SetName => setName;
         public XRReferenceImageLibrary Library => library;
 
-        public List<ARMarkerOffset> Offsets => offsets.ToList();
+        public IEnumerable<ARMarkerOffset> Offsets => offsets.ToList();
 
         [SerializeField] private string setName;
         [SerializeField] private XRReferenceImageLibrary library;
@@ -25,7 +25,7 @@ namespace Hado.ARFoundation
     }
 
     [Serializable]
-    public class ARMarkerOffset
+    public struct ARMarkerOffset
     {
         public string MarkerName => markerName;
         public Vector3 Position => position;
