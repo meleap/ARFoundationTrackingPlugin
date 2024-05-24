@@ -31,6 +31,8 @@ namespace Hado.ARFoundation
 
         public ReactiveProperty<MovingStatus> IsMoving { get; } = new ReactiveProperty<MovingStatus>(MovingStatus.None);
 
+        private CancellationTokenSource _cancellationTokenSource;
+
         private void Awake()
         {
             PositionManager.Instance.WorldAnchor = gameObject;
@@ -40,13 +42,14 @@ namespace Hado.ARFoundation
         {
             var moveStartTransform = gameObject.transform;
             
-            ARSessionManager.Instance.arTrackedImageEventManager.OnTrackedImagesChangedObservable
+            ARSessionManager.Instance.arTrackedImageEventManager.TrackedImagesChangedObservable
                 .Where(_ => IsMoving.Value == MovingStatus.None) // 補正中は流さない
                 .Do(t => PositionManager.Instance.LastDetectedAnchorName = t.referenceImage.name)
                 .Do(t => Debug.Log($"{t.referenceImage.name} detected"))
-                .Select(t =>
-                    ARSessionManager.Instance.arTrackedImageEventManager.GetReferenceAnchor(t.referenceImage.name)
-                        .transform.position)
+                .Select(t => ARSessionManager.Instance.arTrackedImageEventManager.GetReferenceAnchor(t.referenceImage
+                    .name))
+                .Where(x => x != null) // なぜnullがあるかはARTrackedImageEventManagerを参照
+                .Select(x => x.transform.position)
                 .Where(_ => ARSession.state >= ARSessionState.SessionInitializing)
                 .Buffer(NoiseCheckSampleCount + 1)
                 .Subscribe(positions =>
@@ -64,9 +67,11 @@ namespace Hado.ARFoundation
                     var moveEndRotation =
                         ARSessionManager.Instance.arTrackedImageEventManager.GetReferenceAnchor(PositionManager.Instance
                             .LastDetectedAnchorName).transform.rotation;
-                    
-                    
-                    MoveToX(moveStartTransform.position, moveStartTransform.rotation, positions[2], moveEndRotation);
+
+                    _cancellationTokenSource?.Cancel();
+                    _cancellationTokenSource?.Dispose();
+                    _cancellationTokenSource = new CancellationTokenSource();
+                    MoveToX(moveStartTransform.position, moveStartTransform.rotation, positions[2], moveEndRotation, _cancellationTokenSource.Token).Forget();
                     
                 }).AddTo(this);
         }
@@ -84,36 +89,23 @@ namespace Hado.ARFoundation
             return _noiseCheckSamples.Any(x => x > MovingNoiseThreshold);
         }
 
-        public IDisposable RegisterIntervalTracking(CancellationTokenSource cancellationTokenSource,
+        public IDisposable RegisterIntervalTracking(CancellationToken cancellationToken,
             int imageTrackingIntervalMils = 3000)
         {
             Debug.Log("RegisterIntervalTracking");
-            return ARSessionManager.Instance.arTrackedImageEventManager.OnTrackedImagesChangedObservable
+            return ARSessionManager.Instance.arTrackedImageEventManager.TrackedImagesChangedObservable
                 .Where(_ => IsMoving.Value == MovingStatus.Moving) // 補正が始まったら発火
-                .Subscribe(async _ =>
+                .Subscribe(_ => UniTask.Void(async () =>
                     {
                         ARSessionManager.Instance.EnabledImageTracking = false;
-
-                        await WaitForMoveEnd();
-
-                        await UniTask.Delay(TimeSpan.FromMilliseconds(imageTrackingIntervalMils));
-
-                        if (cancellationTokenSource.Token.IsCancellationRequested) return;
-
+                        await UniTask.WaitWhile(() => IsMoving.Value == MovingStatus.Moving, cancellationToken: cancellationToken);
+                        await UniTask.Delay(TimeSpan.FromMilliseconds(imageTrackingIntervalMils), cancellationToken: cancellationToken);
                         ARSessionManager.Instance.EnabledImageTracking = true;
                     }
-                );
+                ));
         }
 
-        private async UniTask WaitForMoveEnd()
-        {
-            while (IsMoving.Value == MovingStatus.Moving)
-            {
-                await UniTask.NextFrame();
-            }
-        }
-        
-        private async UniTask MoveToX(Vector3 startPos, Quaternion startRot, Vector3 endPos, Quaternion endRot)
+        private async UniTask MoveToX(Vector3 startPos, Quaternion startRot, Vector3 endPos, Quaternion endRot, CancellationToken cancellationToken)
         {
             IsMoving.Value = MovingStatus.Moving;
 
@@ -134,7 +126,7 @@ namespace Hado.ARFoundation
                 gameObject.transform.position = Vector3.Lerp(startPos, endPos, lerpPoint);
                 gameObject.transform.rotation = Quaternion.Lerp(startRot, endRot, lerpPoint);
 
-                await UniTask.WaitForEndOfFrame();
+                await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate, cancellationToken);
             }
         }
     }

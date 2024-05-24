@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.XR.ARSubsystems;
 using UnityEngine.XR.ARFoundation;
@@ -12,15 +13,22 @@ namespace Hado.ARFoundation
     {
         private readonly Subject<ARTrackedImage> _trackImagesChangedSubject = new Subject<ARTrackedImage>();
 
-        public IObservable<ARTrackedImage> OnTrackedImagesChangedObservable => _trackImagesChangedSubject.AsObservable();
+        public IObservable<ARTrackedImage> TrackedImagesChangedObservable => _trackImagesChangedSubject.AsObservable();
 
         private ARTrackedImageManager _mTrackedImageManager;
 
-        private readonly Dictionary<string, GameObject> _detectedReferenceAnchors = new Dictionary<string, GameObject>();
+        private readonly Dictionary<string, GameObject>
+            _detectedReferenceAnchors = new Dictionary<string, GameObject>();
 
         public GameObject GetReferenceAnchor(string imageName)
         {
-            return _detectedReferenceAnchors.ContainsKey(imageName) ? _detectedReferenceAnchors[imageName] : null;
+            var ret = _detectedReferenceAnchors.GetValueOrDefault(imageName);
+
+            // 初回マーカー認識後にNative側で"UnityARKit: Updating ARSession configuration"があると、keyはあるのにAnchorがnullという状態が発生する
+            // その場合は一度クリアして再度Anchorを設定する
+            if (ret == null) Clear();
+
+            return ret;
         }
 
         public void Clear()
@@ -51,7 +59,7 @@ namespace Hado.ARFoundation
             {
                 // 初回だけの処理はここに
                 Debug.Log($"OnTrackedImagesChanged: add: {trackedImage.trackingState}");
-                if(!_detectedReferenceAnchors.ContainsKey(trackedImage.referenceImage.name))
+                if (!_detectedReferenceAnchors.ContainsKey(trackedImage.referenceImage.name))
                     InitAnchorTransform(trackedImage);
                 _trackImagesChangedSubject.OnNext(trackedImage);
             }
@@ -59,12 +67,12 @@ namespace Hado.ARFoundation
             foreach (var trackedImage in eventArgs.updated)
             {
                 if (trackedImage.trackingState != TrackingState.Tracking) return;
-                
+
                 //TODO: 稀に初回detectなのにupdateで渡されることがある
-                if(!_detectedReferenceAnchors.ContainsKey(trackedImage.referenceImage.name))
+                if (!_detectedReferenceAnchors.ContainsKey(trackedImage.referenceImage.name))
                     InitAnchorTransform(trackedImage);
-                    
-                
+
+
                 Debug.Log($"OnTrackedImagesChanged: updated: {trackedImage.trackingState}");
                 _trackImagesChangedSubject.OnNext(trackedImage);
             }
@@ -72,7 +80,7 @@ namespace Hado.ARFoundation
 
         private void InitAnchorTransform(ARTrackedImage trackedImage)
         {
-            Debug.Log("InitAnchorTransform");
+            Debug.Log($"InitAnchorTransform: {trackedImage.referenceImage.name}");
             var markerName = trackedImage.referenceImage.name;
             var anchor = trackedImage.GetComponentInChildren<Anchor>();
             anchor.Name = markerName;
