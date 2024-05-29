@@ -15,12 +15,12 @@ namespace Hado.ARFoundation
         Detecting,
         Moving
     }
-    
+
     public class WorldAnchorManager : MonoBehaviour
     {
         // 移動時間
         private const float MoveTime = 1.5f;
-        
+
         /// フレーム間の移動距離がこの値より大きい場合はノイズとして捨てる
         [NonSerialized] public float MovingNoiseThreshold = 0.05f;
 
@@ -41,7 +41,7 @@ namespace Hado.ARFoundation
         private void Start()
         {
             var moveStartTransform = gameObject.transform;
-            
+
             ARSessionManager.Instance.arTrackedImageEventManager.TrackedImagesChangedObservable
                 .Where(_ => IsMoving.Value == MovingStatus.None) // 補正中は流さない
                 .Do(t => PositionManager.Instance.LastDetectedAnchorName = t.referenceImage.name)
@@ -54,7 +54,6 @@ namespace Hado.ARFoundation
                 .Buffer(NoiseCheckSampleCount + 1)
                 .Subscribe(positions =>
                 {
-                    
                     // フレーム間の移動距離が大きすぎる場合はノイズとして捨てる
                     IsMoving.Value = MovingStatus.Detecting;
                     _noiseCheckSamples.Clear();
@@ -62,7 +61,7 @@ namespace Hado.ARFoundation
                     {
                         IsMoving.Value = MovingStatus.None;
                         return;
-                    };
+                    }
 
                     var moveEndRotation =
                         ARSessionManager.Instance.arTrackedImageEventManager.GetReferenceAnchor(PositionManager.Instance
@@ -71,9 +70,14 @@ namespace Hado.ARFoundation
                     _cancellationTokenSource?.Cancel();
                     _cancellationTokenSource?.Dispose();
                     _cancellationTokenSource = new CancellationTokenSource();
-                    MoveToX(moveStartTransform.position, moveStartTransform.rotation, positions[2], moveEndRotation, _cancellationTokenSource.Token).Forget();
-                    
+                    MoveToX(moveStartTransform.position, moveStartTransform.rotation, positions[2], moveEndRotation,
+                        _cancellationTokenSource.Token).Forget();
                 }).AddTo(this);
+        }
+
+        public void CancelMove()
+        {
+            _cancellationTokenSource?.Cancel();
         }
 
         private bool IsNoiseData(IList<Vector3> positions)
@@ -83,7 +87,7 @@ namespace Hado.ARFoundation
                 _noiseCheckSamples.Add(Vector3.Distance(positions[i], positions[i + 1]));
                 Debug.Log($"Noise check[{i}]: {Vector3.Distance(positions[i], positions[i + 1]):F6}");
             }
-            
+
             Debug.Log($"Check: {_noiseCheckSamples.Any(x => x > MovingNoiseThreshold)}");
 
             return _noiseCheckSamples.Any(x => x > MovingNoiseThreshold);
@@ -98,14 +102,17 @@ namespace Hado.ARFoundation
                 .Subscribe(_ => UniTask.Void(async () =>
                     {
                         ARSessionManager.Instance.EnabledImageTracking = false;
-                        await UniTask.WaitWhile(() => IsMoving.Value == MovingStatus.Moving, cancellationToken: cancellationToken);
-                        await UniTask.Delay(TimeSpan.FromMilliseconds(imageTrackingIntervalMils), cancellationToken: cancellationToken);
+                        await UniTask.WaitWhile(() => IsMoving.Value == MovingStatus.Moving,
+                            cancellationToken: cancellationToken);
+                        await UniTask.Delay(TimeSpan.FromMilliseconds(imageTrackingIntervalMils),
+                            cancellationToken: cancellationToken);
                         ARSessionManager.Instance.EnabledImageTracking = true;
                     }
                 ));
         }
 
-        private async UniTask MoveToX(Vector3 startPos, Quaternion startRot, Vector3 endPos, Quaternion endRot, CancellationToken cancellationToken)
+        private async UniTask MoveToX(Vector3 startPos, Quaternion startRot, Vector3 endPos, Quaternion endRot,
+            CancellationToken cancellationToken)
         {
             IsMoving.Value = MovingStatus.Moving;
 
@@ -116,7 +123,7 @@ namespace Hado.ARFoundation
                 x += Time.deltaTime / MoveTime;
 
                 var lerpPoint = (float)(1 - Math.Pow(1 - x, 5));
-            
+
                 if (lerpPoint > 1)
                 {
                     IsMoving.Value = MovingStatus.None;
