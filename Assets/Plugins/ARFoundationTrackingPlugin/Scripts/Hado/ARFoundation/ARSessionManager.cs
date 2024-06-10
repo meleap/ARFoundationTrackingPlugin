@@ -50,11 +50,17 @@ namespace Hado.ARFoundation
             arSession.enabled = false;
             arCameraManager.enabled = false;
 
-            _dummyBlackCanvas = Resources.Load<GameObject>(DummyBlackCanvasName);
+            var go = Resources.Load<GameObject>(DummyBlackCanvasName);
+            // ARCameraを起動したときに前回のラストフレームが一瞬描写される。それを隠すための黒キャンバス
+            _dummyBlackCanvas = Instantiate(go, arCamera.transform);
+            _dummyBlackCanvas.GetComponent<Canvas>().worldCamera = arCamera;
+            _dummyBlackCanvas.GetComponent<Canvas>().planeDistance = 1f;
         }
 
         public async UniTask PowerOffAsync()
         {
+            _dummyBlackCanvas.SetActive(true);
+            
             arTrackedImageEventManager.Clear();
             arSession.Reset();
             trackedPoseDriver.enabled = false;
@@ -64,7 +70,8 @@ namespace Hado.ARFoundation
             arCamera.enabled = false;
             arCameraManager.enabled = false;
             arSession.enabled = false;
-            
+
+            await UniTask.NextFrame();
         }
 
         public async UniTask PowerOnAsync(bool enableCamera = true, 
@@ -77,12 +84,6 @@ namespace Hado.ARFoundation
         {
             arTrackedImageManager.referenceLibrary = ARMarkerManager.Instance.CurrentReferenceLibrary;
             
-            // ARCameraを起動したときに前回のラストフレームが一瞬描写される。それを隠すための黒キャンバス
-            var ui = Instantiate(_dummyBlackCanvas, arCamera.transform);
-            
-            ui.GetComponent<Canvas>().worldCamera = arCamera;
-            ui.GetComponent<Canvas>().planeDistance = 1f;
-
             if(autoFocus)
                 AutoFocusRequested = true;
 
@@ -96,19 +97,9 @@ namespace Hado.ARFoundation
             EnabledImageTracking = enableImageTracking;
 
             arSession.enabled = true;
-            
-            try
-            {
-                await UniTask.Delay(warmupDelay, cancellationToken: ct);
-            }
-            catch (OperationCanceledException e)
-            {
-                Destroy(ui);
-                throw new OperationCanceledException(e.Message);
-            }
-            
-            Destroy(ui);
 
+            _dummyBlackCanvas.SetActive(false);
+            
             await UniTask.NextFrame(cancellationToken: ct);
 
             EnableOcclusion = enableOcclusion;
