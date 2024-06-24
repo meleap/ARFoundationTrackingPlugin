@@ -97,6 +97,15 @@ namespace Hado.ARFoundation
             EnabledImageTracking = enableImageTracking;
 
             arSession.enabled = true;
+            
+            try
+            {
+                await UniTask.Delay(warmupDelay, cancellationToken: ct);
+            }
+            catch (OperationCanceledException e)
+            {
+                throw new OperationCanceledException(e.Message);
+            }
 
             _dummyBlackCanvas.SetActive(false);
             
