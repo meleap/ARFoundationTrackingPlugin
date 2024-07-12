@@ -6,6 +6,7 @@ using Unity.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem.XR;
 using UnityEngine.XR.ARFoundation;
+using UnityEngine.XR.ARSubsystems;
 
 namespace Hado.ARFoundation
 {
@@ -21,6 +22,7 @@ namespace Hado.ARFoundation
         [SerializeField] public ARTrackedImageEventManager arTrackedImageEventManager;
         [SerializeField] public Camera arCamera;
         [SerializeField] public AROcclusionManager arOcclusionManager;
+        private XRCameraConfiguration? _defaultConfiguration;
         private GameObject _dummyBlackCanvas;
 
         public static ARSessionManager Instance { get; private set; }
@@ -94,6 +96,10 @@ namespace Hado.ARFoundation
         {
             _dummyBlackCanvas.SetActive(true);
 
+            // デフォルトのカメラ設定に戻します
+            if (_defaultConfiguration != null && arCameraManager.enabled)
+                arCameraManager.currentConfiguration = _defaultConfiguration;
+
             arTrackedImageEventManager.Clear();
             arSession.Reset();
             trackedPoseDriver.enabled = false;
@@ -141,6 +147,8 @@ namespace Hado.ARFoundation
                 throw new OperationCanceledException(e.Message);
             }
 
+            // デフォルトのカメラ設定を保存します
+            _defaultConfiguration = arCameraManager.currentConfiguration;
             if (enableHighResolution)
             {
                 // 利用可能なカメラ設定を取得します
