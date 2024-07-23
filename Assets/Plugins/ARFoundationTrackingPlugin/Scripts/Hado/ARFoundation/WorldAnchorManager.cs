@@ -33,11 +33,6 @@ namespace Hado.ARFoundation
 
         private CancellationTokenSource _cancellationTokenSource;
 
-        private void Awake()
-        {
-            PositionManager.Instance.WorldAnchor = gameObject;
-        }
-
         private void Start()
         {
             var moveStartTransform = gameObject.transform;
