@@ -54,7 +54,6 @@ namespace Hado.ARFoundation
                     _noiseCheckSamples.Clear();
                     if (IsNoiseData(positions))
                     {
-                        Debug.Log("Noise detected");
                         IsMoving.Value = MovingStatus.None;
                         return;
                     }
@@ -119,7 +118,6 @@ namespace Hado.ARFoundation
         private async UniTask MoveToX(Vector3 startPos, Quaternion startRot, Vector3 endPos, Quaternion endRot,
             CancellationToken cancellationToken)
         {
-            Debug.Log("MoveToX");
             IsMoving.Value = MovingStatus.Moving;
 
             var x = 0f;
