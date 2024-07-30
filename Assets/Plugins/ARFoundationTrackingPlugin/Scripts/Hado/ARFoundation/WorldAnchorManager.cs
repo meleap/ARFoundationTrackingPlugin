@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using UnityEngine;
-using UniRx;
 using Cysharp.Threading.Tasks;
+using UniRx;
+using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 
 namespace Hado.ARFoundation
@@ -21,22 +21,17 @@ namespace Hado.ARFoundation
         // 移動時間
         private const float MoveTime = 1.5f;
 
+        private readonly List<float> _noiseCheckSamples = new();
+
+        private CancellationTokenSource? _cancellationTokenSource;
+
         /// フレーム間の移動距離がこの値より大きい場合はノイズとして捨てる
         [NonSerialized] public float MovingNoiseThreshold = 0.05f;
 
         /// MovingNoiseThresholdのチェックを何回ぶん行うか
         [NonSerialized] public int NoiseCheckSampleCount = 2;
 
-        private readonly List<float> _noiseCheckSamples = new List<float>();
-
-        public ReactiveProperty<MovingStatus> IsMoving { get; } = new ReactiveProperty<MovingStatus>(MovingStatus.None);
-
-        private CancellationTokenSource _cancellationTokenSource;
-
-        private void Awake()
-        {
-            PositionManager.Instance.WorldAnchor = gameObject;
-        }
+        public ReactiveProperty<MovingStatus> IsMoving { get; } = new(MovingStatus.None);
 
         private void Start()
         {
@@ -78,6 +73,7 @@ namespace Hado.ARFoundation
         public void CancelMove()
         {
             _cancellationTokenSource?.Cancel();
+            IsMoving.Value = MovingStatus.None;
         }
 
         private bool IsNoiseData(IList<Vector3> positions)
@@ -101,12 +97,20 @@ namespace Hado.ARFoundation
                 .Where(_ => IsMoving.Value == MovingStatus.Moving) // 補正が始まったら発火
                 .Subscribe(_ => UniTask.Void(async () =>
                     {
-                        ARSessionManager.Instance.EnabledImageTracking = false;
-                        await UniTask.WaitWhile(() => IsMoving.Value == MovingStatus.Moving,
-                            cancellationToken: cancellationToken);
-                        await UniTask.Delay(TimeSpan.FromMilliseconds(imageTrackingIntervalMils),
-                            cancellationToken: cancellationToken);
-                        ARSessionManager.Instance.EnabledImageTracking = true;
+                        try
+                        {
+                            ARSessionManager.Instance.EnabledImageTracking = false;
+                            await UniTask.WaitWhile(() => IsMoving.Value == MovingStatus.Moving,
+                                cancellationToken: cancellationToken);
+                            await UniTask.Delay(TimeSpan.FromMilliseconds(imageTrackingIntervalMils),
+                                cancellationToken: cancellationToken);
+                            ARSessionManager.Instance.EnabledImageTracking = true;
+                        }
+                        finally
+                        {
+                            // arカメラの状態にあわせる
+                            ARSessionManager.Instance.EnabledImageTracking = ARSessionManager.Instance.arCamera.enabled;
+                        }
                     }
                 ));
         }
@@ -118,22 +122,29 @@ namespace Hado.ARFoundation
 
             var x = 0f;
 
-            while (IsMoving.Value == MovingStatus.Moving)
+            try
             {
-                x += Time.deltaTime / MoveTime;
-
-                var lerpPoint = (float)(1 - Math.Pow(1 - x, 5));
-
-                if (lerpPoint > 1)
+                while (IsMoving.Value == MovingStatus.Moving)
                 {
-                    IsMoving.Value = MovingStatus.None;
-                    lerpPoint = 1f;
+                    x += Time.deltaTime / MoveTime;
+
+                    var lerpPoint = (float)(1 - Math.Pow(1 - x, 5));
+
+                    if (lerpPoint > 1)
+                    {
+                        IsMoving.Value = MovingStatus.None;
+                        lerpPoint = 1f;
+                    }
+
+                    gameObject.transform.position = Vector3.Lerp(startPos, endPos, lerpPoint);
+                    gameObject.transform.rotation = Quaternion.Lerp(startRot, endRot, lerpPoint);
+
+                    await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate, cancellationToken);
                 }
-
-                gameObject.transform.position = Vector3.Lerp(startPos, endPos, lerpPoint);
-                gameObject.transform.rotation = Quaternion.Lerp(startRot, endRot, lerpPoint);
-
-                await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate, cancellationToken);
+            }
+            finally
+            {
+                IsMoving.Value = MovingStatus.None;
             }
         }
     }
