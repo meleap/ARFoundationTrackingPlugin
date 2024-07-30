@@ -33,11 +33,6 @@ namespace Hado.ARFoundation
 
         public ReactiveProperty<MovingStatus> IsMoving { get; } = new(MovingStatus.None);
 
-        private void Awake()
-        {
-            PositionManager.Instance.WorldAnchor = gameObject;
-        }
-
         private void Start()
         {
             var moveStartTransform = gameObject.transform;
