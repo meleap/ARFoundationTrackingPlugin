@@ -124,7 +124,9 @@ namespace Hado.ARFoundation
             IsMoving.Value = MovingStatus.Moving;
 
             var x = 0f;
-
+            Vector3 targetPos;
+            Quaternion targetRot;
+            
             try
             {
                 while (IsMoving.Value == MovingStatus.Moving)
@@ -138,11 +140,12 @@ namespace Hado.ARFoundation
                         IsMoving.Value = MovingStatus.None;
                         lerpPoint = 1f;
                     }
-
-                    gameObject.transform.position = Vector3.Lerp(startPos, endPos, lerpPoint);
-                    gameObject.transform.rotation = Quaternion.Lerp(startRot, endRot, lerpPoint);
                     
-                    worldAnchorMatrix = Matrix4x4.TRS(gameObject.transform.position, gameObject.transform.rotation, Vector3.one);
+                    targetPos = Vector3.Lerp(startPos, endPos, lerpPoint);
+                    targetRot = Quaternion.Lerp(startRot, endRot, lerpPoint);
+                    
+                    gameObject.transform.SetPositionAndRotation(targetPos, targetRot);
+                    worldAnchorMatrix = Matrix4x4.TRS(targetPos, targetRot, Vector3.one);
 
                     await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate, cancellationToken);
                 }
