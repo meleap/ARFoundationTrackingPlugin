@@ -5,6 +5,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using UniRx;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.XR.ARFoundation;
 
 namespace Hado.ARFoundation
@@ -32,6 +33,8 @@ namespace Hado.ARFoundation
         [NonSerialized] public int NoiseCheckSampleCount = 2;
 
         public ReactiveProperty<MovingStatus> IsMoving { get; } = new(MovingStatus.None);
+
+        public Matrix4x4 worldAnchorMatrix;
 
         private void Start()
         {
@@ -67,6 +70,14 @@ namespace Hado.ARFoundation
                     _cancellationTokenSource = new CancellationTokenSource();
                     MoveToX(moveStartTransform.position, moveStartTransform.rotation, positions[2], moveEndRotation,
                         _cancellationTokenSource.Token).Forget();
+                }).AddTo(this);
+            
+            IsMoving
+                .Pairwise()
+                .Where(x => x is { Previous: MovingStatus.Moving, Current: MovingStatus.None})
+                .Subscribe(_ =>
+                {
+                    worldAnchorMatrix = Matrix4x4.TRS(gameObject.transform.position, gameObject.transform.rotation, Vector3.one);
                 }).AddTo(this);
         }
 
