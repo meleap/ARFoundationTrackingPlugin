@@ -71,14 +71,6 @@ namespace Hado.ARFoundation
                     MoveToX(moveStartTransform.position, moveStartTransform.rotation, positions[2], moveEndRotation,
                         _cancellationTokenSource.Token).Forget();
                 }).AddTo(this);
-            
-            IsMoving
-                .Pairwise()
-                .Where(x => x is { Previous: MovingStatus.Moving, Current: MovingStatus.None})
-                .Subscribe(_ =>
-                {
-                    worldAnchorMatrix = Matrix4x4.TRS(gameObject.transform.position, gameObject.transform.rotation, Vector3.one);
-                }).AddTo(this);
         }
 
         public void CancelMove()
@@ -149,6 +141,8 @@ namespace Hado.ARFoundation
 
                     gameObject.transform.position = Vector3.Lerp(startPos, endPos, lerpPoint);
                     gameObject.transform.rotation = Quaternion.Lerp(startRot, endRot, lerpPoint);
+                    
+                    worldAnchorMatrix = Matrix4x4.TRS(gameObject.transform.position, gameObject.transform.rotation, Vector3.one);
 
                     await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate, cancellationToken);
                 }
