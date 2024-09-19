@@ -36,8 +36,8 @@ namespace Hado.ARFoundation
 
         private readonly ReactiveProperty<(Vector3, Quaternion)> _positionAndRotation = new();
         public IReadOnlyReactiveProperty<(Vector3, Quaternion)> PositionAndRotation => _positionAndRotation;
-        
-        
+
+
         private Transform _transform = null!;
 
         private void Awake()
@@ -47,7 +47,7 @@ namespace Hado.ARFoundation
 
         private void Start()
         {
-            _positionAndRotation.Value = (_transform.position , _transform.rotation);
+            _positionAndRotation.Value = (_transform.position, _transform.rotation);
 
             ARSessionManager.Instance.arTrackedImageEventManager.TrackedImagesChangedObservable
                 .Where(_ => IsMoving.Value == MovingStatus.None) // 補正中は流さない
@@ -154,7 +154,7 @@ namespace Hado.ARFoundation
                     targetRot = Quaternion.Lerp(startRot, endRot, lerpPoint);
 
                     _transform.SetPositionAndRotation(targetPos, targetRot);
-                    _positionAndRotation.Value = (_transform.position , _transform.rotation);
+                    _positionAndRotation.Value = (_transform.position, _transform.rotation);
 
                     await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate, cancellationToken);
                 }
