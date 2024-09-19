@@ -39,15 +39,6 @@ namespace Hado.ARFoundation
         private void Start()
         {
             var moveStartTransform = gameObject.transform;
-            for (int i = 0; i < 4; i++)
-            {
-                string row = "";
-                for (int j = 0; j < 4; j++)
-                {
-                    row += worldAnchorMatrix[i, j].ToString("F2") + " "; // "F2" formats to two decimal places
-                }
-                Debug.LogError(row);
-            }
             worldAnchorMatrix = Matrix4x4.TRS(gameObject.transform.position, gameObject.transform.rotation,
                 Vector3.one);
 
