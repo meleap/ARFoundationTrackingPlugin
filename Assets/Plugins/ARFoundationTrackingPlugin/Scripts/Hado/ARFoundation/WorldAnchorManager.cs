@@ -34,13 +34,20 @@ namespace Hado.ARFoundation
 
         private ReactiveProperty<MovingStatus> IsMoving { get; } = new(MovingStatus.None);
 
-        public Matrix4x4 worldAnchorMatrix = Matrix4x4.identity;
+        private readonly ReactiveProperty<(Vector3, Quaternion)> _positionAndRotation = new();
+        public IReadOnlyReactiveProperty<(Vector3, Quaternion)> PositionAndRotation => _positionAndRotation;
+        
+        
+        private Transform _transform = null!;
+
+        private void Awake()
+        {
+            _transform = transform;
+        }
 
         private void Start()
         {
-            var moveStartTransform = gameObject.transform;
-            worldAnchorMatrix = Matrix4x4.TRS(gameObject.transform.position, gameObject.transform.rotation,
-                Vector3.one);
+            _positionAndRotation.Value = (_transform.position , _transform.rotation);
 
             ARSessionManager.Instance.arTrackedImageEventManager.TrackedImagesChangedObservable
                 .Where(_ => IsMoving.Value == MovingStatus.None) // 補正中は流さない
@@ -70,7 +77,7 @@ namespace Hado.ARFoundation
                     _cancellationTokenSource?.Cancel();
                     _cancellationTokenSource?.Dispose();
                     _cancellationTokenSource = new CancellationTokenSource();
-                    MoveToX(moveStartTransform.position, moveStartTransform.rotation, positions[2], moveEndRotation,
+                    MoveToX(_transform.position, _transform.rotation, positions[2], moveEndRotation,
                         _cancellationTokenSource.Token).Forget();
                 }).AddTo(this);
         }
@@ -146,8 +153,8 @@ namespace Hado.ARFoundation
                     targetPos = Vector3.Lerp(startPos, endPos, lerpPoint);
                     targetRot = Quaternion.Lerp(startRot, endRot, lerpPoint);
 
-                    gameObject.transform.SetPositionAndRotation(targetPos, targetRot);
-                    worldAnchorMatrix = Matrix4x4.TRS(targetPos, targetRot, Vector3.one);
+                    _transform.SetPositionAndRotation(targetPos, targetRot);
+                    _positionAndRotation.Value = (_transform.position , _transform.rotation);
 
                     await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate, cancellationToken);
                 }
@@ -156,6 +163,11 @@ namespace Hado.ARFoundation
             {
                 IsMoving.Value = MovingStatus.None;
             }
+        }
+
+        private void OnDestroy()
+        {
+            _positionAndRotation.Dispose();
         }
     }
 }
