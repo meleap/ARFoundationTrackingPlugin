@@ -1,4 +1,5 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -31,7 +32,9 @@ namespace Hado.ARFoundation
         /// MovingNoiseThresholdのチェックを何回ぶん行うか
         [NonSerialized] public int NoiseCheckSampleCount = 2;
 
-        public ReactiveProperty<MovingStatus> IsMoving { get; } = new(MovingStatus.None);
+        private ReactiveProperty<MovingStatus> IsMoving { get; } = new(MovingStatus.None);
+
+        public Matrix4x4 worldAnchorMatrix;
 
         private void Start()
         {
@@ -121,7 +124,9 @@ namespace Hado.ARFoundation
             IsMoving.Value = MovingStatus.Moving;
 
             var x = 0f;
-
+            Vector3 targetPos;
+            Quaternion targetRot;
+            
             try
             {
                 while (IsMoving.Value == MovingStatus.Moving)
@@ -135,9 +140,12 @@ namespace Hado.ARFoundation
                         IsMoving.Value = MovingStatus.None;
                         lerpPoint = 1f;
                     }
-
-                    gameObject.transform.position = Vector3.Lerp(startPos, endPos, lerpPoint);
-                    gameObject.transform.rotation = Quaternion.Lerp(startRot, endRot, lerpPoint);
+                    
+                    targetPos = Vector3.Lerp(startPos, endPos, lerpPoint);
+                    targetRot = Quaternion.Lerp(startRot, endRot, lerpPoint);
+                    
+                    gameObject.transform.SetPositionAndRotation(targetPos, targetRot);
+                    worldAnchorMatrix = Matrix4x4.TRS(targetPos, targetRot, Vector3.one);
 
                     await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate, cancellationToken);
                 }
