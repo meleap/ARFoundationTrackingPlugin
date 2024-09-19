@@ -154,7 +154,7 @@ namespace Hado.ARFoundation
                     targetRot = Quaternion.Lerp(startRot, endRot, lerpPoint);
 
                     _transform.SetPositionAndRotation(targetPos, targetRot);
-                    _positionAndRotation.Value = (_transform.position, _transform.rotation);
+                    _positionAndRotation.Value = (targetPos, targetRot);
 
                     await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate, cancellationToken);
                 }
