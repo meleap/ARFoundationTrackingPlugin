@@ -34,7 +34,7 @@ namespace Hado.ARFoundation
 
         private ReactiveProperty<MovingStatus> IsMoving { get; } = new(MovingStatus.None);
 
-        private readonly ReactiveProperty<(Vector3, Quaternion)> _positionAndRotation = new();
+        private readonly ReactiveProperty<(Vector3, Quaternion)> _positionAndRotation = new((Vector3.zero, Quaternion.identity));
         public IReadOnlyReactiveProperty<(Vector3, Quaternion)> PositionAndRotation => _positionAndRotation;
 
 
