@@ -39,6 +39,8 @@ namespace Hado.ARFoundation
         private void Start()
         {
             var moveStartTransform = gameObject.transform;
+            worldAnchorMatrix = Matrix4x4.TRS(gameObject.transform.position, gameObject.transform.rotation,
+                Vector3.one);
 
             ARSessionManager.Instance.arTrackedImageEventManager.TrackedImagesChangedObservable
                 .Where(_ => IsMoving.Value == MovingStatus.None) // 補正中は流さない
@@ -126,7 +128,7 @@ namespace Hado.ARFoundation
             var x = 0f;
             Vector3 targetPos;
             Quaternion targetRot;
-            
+
             try
             {
                 while (IsMoving.Value == MovingStatus.Moving)
@@ -140,10 +142,10 @@ namespace Hado.ARFoundation
                         IsMoving.Value = MovingStatus.None;
                         lerpPoint = 1f;
                     }
-                    
+
                     targetPos = Vector3.Lerp(startPos, endPos, lerpPoint);
                     targetRot = Quaternion.Lerp(startRot, endRot, lerpPoint);
-                    
+
                     gameObject.transform.SetPositionAndRotation(targetPos, targetRot);
                     worldAnchorMatrix = Matrix4x4.TRS(targetPos, targetRot, Vector3.one);
 
