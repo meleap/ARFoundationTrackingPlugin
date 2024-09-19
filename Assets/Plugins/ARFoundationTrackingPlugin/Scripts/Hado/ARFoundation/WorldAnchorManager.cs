@@ -1,4 +1,5 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -31,7 +32,7 @@ namespace Hado.ARFoundation
         /// MovingNoiseThresholdのチェックを何回ぶん行うか
         [NonSerialized] public int NoiseCheckSampleCount = 2;
 
-        public ReactiveProperty<MovingStatus> IsMoving { get; } = new(MovingStatus.None);
+        private ReactiveProperty<MovingStatus> IsMoving { get; } = new(MovingStatus.None);
 
         public Matrix4x4 worldAnchorMatrix;
 
