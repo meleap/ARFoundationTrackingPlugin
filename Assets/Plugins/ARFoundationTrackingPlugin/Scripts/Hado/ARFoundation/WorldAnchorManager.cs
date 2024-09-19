@@ -47,6 +47,7 @@ namespace Hado.ARFoundation
 
         private void Start()
         {
+            // WindowsEYEの場合は、ここまでにposition, rotationが更新されている
             _positionAndRotation.Value = (_transform.position, _transform.rotation);
 
             ARSessionManager.Instance.arTrackedImageEventManager.TrackedImagesChangedObservable
