@@ -37,7 +37,7 @@ public class WorldAnchorInitializerSample : MonoBehaviour
     private async void Start()
     {
         ARSessionManager.Instance.ChangeMarkerSet("");
-        _worldAnchorManager.IsMoving
+        _worldAnchorManager.IsMovingProperty
             .Buffer(2, 1)
             .Subscribe(data =>
             {
@@ -73,7 +73,7 @@ public class WorldAnchorInitializerSample : MonoBehaviour
                 else
                 {
                     _ctsIntervalTracking = new CancellationTokenSource();
-                    _disposable.Add(_worldAnchorManager.RegisterIntervalTracking(_ctsIntervalTracking));
+                    _disposable.Add(_worldAnchorManager.RegisterIntervalTracking(_ctsIntervalTracking.Token));
                 }
 
                 txt.text = nextMode;
@@ -84,12 +84,12 @@ public class WorldAnchorInitializerSample : MonoBehaviour
     private void SubscribeFirstAction()
     {
         Debug.Log("SubscribeFirstAction");
-        ARSessionManager.Instance.arTrackedImageEventManager.OnTrackedImagesChangedObservable
+        ARSessionManager.Instance.arTrackedImageEventManager.TrackedImagesChangedObservable
             .Take(1)
             .Subscribe(_ =>
             {
                 _ctsIntervalTracking = new CancellationTokenSource();
-                _disposable.Add(_worldAnchorManager.RegisterIntervalTracking(_ctsIntervalTracking));
+                _disposable.Add(_worldAnchorManager.RegisterIntervalTracking(_ctsIntervalTracking.Token));
             })
             .AddTo(this);
     }
