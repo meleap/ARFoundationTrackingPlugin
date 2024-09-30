@@ -24,7 +24,7 @@ public class UIARCameraPositionView : MonoBehaviour
 
         ARSession.stateChanged += UpdateARStateChangedText;
 
-        ARSessionManager.Instance.arTrackedImageEventManager.OnTrackedImagesChangedObservable
+        ARSessionManager.Instance.arTrackedImageEventManager.TrackedImagesChangedObservable
             .Select(x => x.gameObject.transform.position)
             .Buffer(3)
             .Subscribe(UpdatePositionText);
