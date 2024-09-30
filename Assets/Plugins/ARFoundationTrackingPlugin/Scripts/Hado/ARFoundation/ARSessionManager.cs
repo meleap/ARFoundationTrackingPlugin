@@ -165,7 +165,7 @@ namespace Hado.ARFoundation
 
             _dummyBlackCanvas.SetActive(false);
 
-            await UniTask.NextFrame(ct);
+            await UniTask.NextFrame(PlayerLoopTiming.Update ,ct);
 
             EnableOcclusion = enableOcclusion;
         }
