@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using Hado.ARFoundation;
 using UniRx;
-using UnityEngine.SceneManagement;
 using UnityEngine.XR.ARFoundation;
 
 public class UIARCameraPositionView : MonoBehaviour
