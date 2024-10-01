@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Threading;
+﻿using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.XR.ARFoundation;
@@ -29,20 +26,18 @@ public class WorldAnchorInitializerSample : MonoBehaviour
         _disposable = new CompositeDisposable();
     }
 
-    private void Update()
-    {
-        //    status.text = $"{SystemInfo.deviceModel}";
-    }
+    // private void Update()
+    // {
+    //     status.text = $"{SystemInfo.deviceModel}";
+    // }
+
 
     private async void Start()
     {
-        ARSessionManager.Instance.ChangeMarkerSet("");
-        _worldAnchorManager.IsMoving
+        await ARSessionManager.Instance.ChangeMarkerSet("");
+        _worldAnchorManager.IsMovingProperty
             .Buffer(2, 1)
-            .Subscribe(data =>
-            {
-                status.text = $"{data[0]} => {data[1]}";
-            });
+            .Subscribe(data => { status.text = $"{data[0]} => {data[1]}"; });
 
         await ARSessionManager.Instance.PowerOnAsync();
 
@@ -51,45 +46,48 @@ public class WorldAnchorInitializerSample : MonoBehaviour
 
         // ボタン操作によるARSessionのリセット
         btn.OnClickAsObservable()
-            .Subscribe(async _ =>
+            .Subscribe(_ =>
             {
-                btn.interactable = false;
-                var nextMode = txt.text == "interval" ? "normal" : "interval";
-                if (nextMode == "normal")
+                UniTask.Void(async () =>
                 {
-                    _disposable.Clear();
-                    _ctsIntervalTracking?.Cancel();
-
-                    if (SystemInfo.deviceModel.StartsWith("iPhone10"))
+                    btn.interactable = false;
+                    var nextMode = txt.text == "interval" ? "normal" : "interval";
+                    if (nextMode == "normal")
                     {
-                        await ARSessionManager.Instance.PowerOffAsync();
-                        await ARSessionManager.Instance.PowerOnAsync(autoFocus: true);
+                        _disposable.Clear();
+                        _ctsIntervalTracking?.Cancel();
+
+                        if (SystemInfo.deviceModel.StartsWith("iPhone10"))
+                        {
+                            await ARSessionManager.Instance.PowerOffAsync();
+                            await ARSessionManager.Instance.PowerOnAsync(autoFocus: true);
+                        }
+                        else
+                        {
+                            await ARSessionManager.Instance.ResetSessionAsync();
+                        }
                     }
                     else
                     {
-                        await ARSessionManager.Instance.ResetSessionAsync();
+                        _ctsIntervalTracking = new CancellationTokenSource();
+                        _disposable.Add(_worldAnchorManager.RegisterIntervalTracking(_ctsIntervalTracking.Token));
                     }
-                }
-                else
-                {
-                    _ctsIntervalTracking = new CancellationTokenSource();
-                    _disposable.Add(_worldAnchorManager.RegisterIntervalTracking(_ctsIntervalTracking));
-                }
 
-                txt.text = nextMode;
-                btn.interactable = true;
+                    txt.text = nextMode;
+                    btn.interactable = true;
+                });
             }).AddTo(this);
     }
 
     private void SubscribeFirstAction()
     {
         Debug.Log("SubscribeFirstAction");
-        ARSessionManager.Instance.arTrackedImageEventManager.OnTrackedImagesChangedObservable
+        ARSessionManager.Instance.arTrackedImageEventManager.TrackedImagesChangedObservable
             .Take(1)
             .Subscribe(_ =>
             {
                 _ctsIntervalTracking = new CancellationTokenSource();
-                _disposable.Add(_worldAnchorManager.RegisterIntervalTracking(_ctsIntervalTracking));
+                _disposable.Add(_worldAnchorManager.RegisterIntervalTracking(_ctsIntervalTracking.Token));
             })
             .AddTo(this);
     }
