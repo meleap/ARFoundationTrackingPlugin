@@ -8,7 +8,7 @@ using UnityEngine.InputSystem.XR;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
 
-namespace Hado.ARFoundation
+namespace Hado.ARFoundation 
 {
     public class ARSessionManager : MonoBehaviour
     {

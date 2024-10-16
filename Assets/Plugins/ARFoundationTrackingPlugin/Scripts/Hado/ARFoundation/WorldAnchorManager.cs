@@ -4,8 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using UniRx;
+using R3;
 using UnityEngine;
+using UnityEngine.InputSystem.Utilities;
 using UnityEngine.XR.ARFoundation;
 
 namespace Hado.ARFoundation
@@ -36,10 +37,10 @@ namespace Hado.ARFoundation
         
         //ARFoundationTrackingPlugin -> WorldAnchorInitializerSampleのためにpublicのものを用意する
         //TypeCだと不要
-        public IReadOnlyReactiveProperty<MovingStatus> IsMovingProperty => IsMoving;
+        public ReadOnlyReactiveProperty<MovingStatus> IsMovingProperty => IsMoving;
 
         private readonly ReactiveProperty<(Vector3, Quaternion)> _positionAndRotation = new((Vector3.zero, Quaternion.identity));
-        public IReadOnlyReactiveProperty<(Vector3, Quaternion)> PositionAndRotation => _positionAndRotation;
+        public ReadOnlyReactiveProperty<(Vector3, Quaternion)> PositionAndRotation => _positionAndRotation;
 
 
         private Transform _transform = null!;
@@ -63,7 +64,7 @@ namespace Hado.ARFoundation
                 .Where(x => x != null) // なぜnullがあるかはARTrackedImageEventManagerを参照
                 .Select(x => x.transform.position)
                 .Where(_ => ARSession.state >= ARSessionState.SessionInitializing)
-                .Buffer(NoiseCheckSampleCount + 1)
+                .Chunk(NoiseCheckSampleCount + 1)
                 .Subscribe(positions =>
                 {
                     // フレーム間の移動距離が大きすぎる場合はノイズとして捨てる
@@ -84,7 +85,7 @@ namespace Hado.ARFoundation
                     _cancellationTokenSource = new CancellationTokenSource();
                     MoveToX(_transform.position, _transform.rotation, positions[2], moveEndRotation,
                         _cancellationTokenSource.Token).Forget();
-                }).AddTo(this);
+                }).AddTo(destroyCancellationToken);
         }
 
         public void CancelMove()

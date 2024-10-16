@@ -1,11 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using Cysharp.Threading.Tasks;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.ARSubsystems;
 using UnityEngine.XR.ARFoundation;
-using UniRx;
+using R3;
+using TrackingState = UnityEngine.XR.ARSubsystems.TrackingState;
 
+//TODO: とりあえずusingだけをUniRXからR3に変更したのですが、ちゃんと確認した方が良さそう
 namespace Hado.ARFoundation
 {
     [RequireComponent(typeof(ARTrackedImageManager))]
@@ -13,7 +13,7 @@ namespace Hado.ARFoundation
     {
         private readonly Subject<ARTrackedImage> _trackImagesChangedSubject = new Subject<ARTrackedImage>();
 
-        public IObservable<ARTrackedImage> TrackedImagesChangedObservable => _trackImagesChangedSubject.AsObservable();
+        public Observable<ARTrackedImage> TrackedImagesChangedObservable => _trackImagesChangedSubject.AsObservable();
 
         private ARTrackedImageManager _mTrackedImageManager;
 
