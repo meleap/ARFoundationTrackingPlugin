@@ -33,7 +33,7 @@ namespace Hado.ARFoundation
         [NonSerialized] public int NoiseCheckSampleCount = 2;
 
         private ReactiveProperty<MovingStatus> IsMoving { get; } = new(MovingStatus.None);
-        public ReadOnlyReactiveProperty<MovingStatus> IsMovingProperty => IsMoving.ToReadOnlyReactiveProperty();
+        public IReadOnlyReactiveProperty<MovingStatus> IsMovingProperty => IsMoving.ToReadOnlyReactiveProperty();
 
         private readonly ReactiveProperty<(Vector3, Quaternion)> _positionAndRotation = new((Vector3.zero, Quaternion.identity));
         public IReadOnlyReactiveProperty<(Vector3, Quaternion)> PositionAndRotation => _positionAndRotation;
