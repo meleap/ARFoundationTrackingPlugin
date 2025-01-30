@@ -73,13 +73,14 @@ namespace Hado.ARFoundation
                 })
                 .Buffer(NoiseCheckSampleCount + 1)
                 .Where(l => !IsNoiseData(l))
-                .Subscribe(positionAndRotations =>
+                .Select(l => l.Last()) // 最新のデータを取得
+                .Subscribe(end =>
                 {
-                    var last = positionAndRotations.Last();
                     _cancellationTokenSource.Cancel();
                     _cancellationTokenSource.Dispose();
                     _cancellationTokenSource = new CancellationTokenSource();
-                    MoveAsync(_positionAndRotation.Value, last, _cancellationTokenSource.Token).Forget();
+                    var start = _positionAndRotation.Value;
+                    MoveAsync(start, end, _cancellationTokenSource.Token).Forget();
                 }).AddTo(this);
         }
 
