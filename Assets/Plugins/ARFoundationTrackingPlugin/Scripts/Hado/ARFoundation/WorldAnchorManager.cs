@@ -44,14 +44,12 @@ namespace Hado.ARFoundation
         public IReadOnlyReactiveProperty<(Vector3, Quaternion)> PositionAndRotation => _positionAndRotation;
 
         private Transform _transform = null!;
-        private PositionManager _positionManager = null!;
         private ARSessionManager _arSessionManager = null!;
         private ARTrackedImageEventManager _arTrackedImageEventManager = null!;
 
         private void Awake()
         {
             _transform = transform;
-            _positionManager = PositionManager.Instance;
             _arSessionManager = ARSessionManager.Instance;
             _arTrackedImageEventManager = _arSessionManager.arTrackedImageEventManager;
         }
@@ -63,7 +61,6 @@ namespace Hado.ARFoundation
 
             _arTrackedImageEventManager.TrackedImagesChangedObservable
                 .Where(_ => IsMoving.Value == MovingStatus.None) // 補正中は流さない
-                .Do(t => _positionManager.LastDetectedAnchorName = t.referenceImage.name)
                 .Select(t => _arTrackedImageEventManager.GetReferenceAnchor(t.referenceImage.name))
                 .Where(x => x != null) // なぜnullがあるかはARTrackedImageEventManagerを参照
                 .Select(x => (x.transform.position, x.transform.rotation))
