@@ -66,27 +66,25 @@ namespace Hado.ARFoundation
                 .Do(t => _positionManager.LastDetectedAnchorName = t.referenceImage.name)
                 .Select(t => _arTrackedImageEventManager.GetReferenceAnchor(t.referenceImage.name))
                 .Where(x => x != null) // なぜnullがあるかはARTrackedImageEventManagerを参照
-                .Select(x => x.transform.position)
+                .Select(x => (x.transform.position, x.transform.rotation))
                 .Where(_ => ARSession.state >= ARSessionState.SessionInitializing)
                 .Buffer(NoiseCheckSampleCount + 1)
-                .Subscribe(positions =>
+                .Subscribe(positionAndRotations =>
                 {
                     // フレーム間の移動距離が大きすぎる場合はノイズとして捨てる
                     IsMoving.Value = MovingStatus.Detecting;
                     _noiseCheckSamples.Clear();
-                    if (IsNoiseData(positions))
+                    if (IsNoiseData(positionAndRotations))
                     {
                         IsMoving.Value = MovingStatus.None;
                         return;
                     }
 
-                    var moveEndRotation = _arTrackedImageEventManager
-                        .GetReferenceAnchor(_positionManager.LastDetectedAnchorName).transform.rotation;
-
+                    var last = positionAndRotations.Last();
                     _cancellationTokenSource?.Cancel();
                     _cancellationTokenSource?.Dispose();
                     _cancellationTokenSource = new CancellationTokenSource();
-                    MoveAsync(_transform.position, _transform.rotation, positions[2], moveEndRotation,
+                    MoveAsync(_transform.position, _transform.rotation, last.position, last.rotation,
                         _cancellationTokenSource.Token).Forget();
                 }).AddTo(this);
         }
@@ -132,11 +130,11 @@ namespace Hado.ARFoundation
             IsMoving.Value = MovingStatus.None;
         }
 
-        private bool IsNoiseData(IList<Vector3> positions)
+        private bool IsNoiseData(IList<(Vector3, Quaternion)> positionAndRotations)
         {
             for (var i = 0; i < NoiseCheckSampleCount; i++)
             {
-                _noiseCheckSamples.Add(Vector3.Distance(positions[i], positions[i + 1]));
+                _noiseCheckSamples.Add(Vector3.Distance(positionAndRotations[i].Item1, positionAndRotations[i + 1].Item1));
             }
 
             return _noiseCheckSamples.Any(x => x > MovingNoiseThreshold);
