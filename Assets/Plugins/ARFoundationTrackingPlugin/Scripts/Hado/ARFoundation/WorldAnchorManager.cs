@@ -43,12 +43,17 @@ namespace Hado.ARFoundation
 
         public IReadOnlyReactiveProperty<(Vector3, Quaternion)> PositionAndRotation => _positionAndRotation;
 
-
         private Transform _transform = null!;
+        private PositionManager _positionManager = null!;
+        private ARSessionManager _arSessionManager = null!;
+        private ARTrackedImageEventManager _arTrackedImageEventManager = null!;
 
         private void Awake()
         {
             _transform = transform;
+            _positionManager = PositionManager.Instance;
+            _arSessionManager = ARSessionManager.Instance;
+            _arTrackedImageEventManager = _arSessionManager.arTrackedImageEventManager;
         }
 
         private void Start()
@@ -56,11 +61,10 @@ namespace Hado.ARFoundation
             // WindowsEYEの場合は、ここまでにposition, rotationが更新されている
             _positionAndRotation.Value = (_transform.position, _transform.rotation);
 
-            ARSessionManager.Instance.arTrackedImageEventManager.TrackedImagesChangedObservable
+            _arTrackedImageEventManager.TrackedImagesChangedObservable
                 .Where(_ => IsMoving.Value == MovingStatus.None) // 補正中は流さない
-                .Do(t => PositionManager.Instance.LastDetectedAnchorName = t.referenceImage.name)
-                .Select(t => ARSessionManager.Instance.arTrackedImageEventManager.GetReferenceAnchor(t.referenceImage
-                    .name))
+                .Do(t => _positionManager.LastDetectedAnchorName = t.referenceImage.name)
+                .Select(t => _arTrackedImageEventManager.GetReferenceAnchor(t.referenceImage.name))
                 .Where(x => x != null) // なぜnullがあるかはARTrackedImageEventManagerを参照
                 .Select(x => x.transform.position)
                 .Where(_ => ARSession.state >= ARSessionState.SessionInitializing)
@@ -76,9 +80,8 @@ namespace Hado.ARFoundation
                         return;
                     }
 
-                    var moveEndRotation =
-                        ARSessionManager.Instance.arTrackedImageEventManager.GetReferenceAnchor(PositionManager.Instance
-                            .LastDetectedAnchorName).transform.rotation;
+                    var moveEndRotation = _arTrackedImageEventManager
+                        .GetReferenceAnchor(_positionManager.LastDetectedAnchorName).transform.rotation;
 
                     _cancellationTokenSource?.Cancel();
                     _cancellationTokenSource?.Dispose();
@@ -107,23 +110,23 @@ namespace Hado.ARFoundation
         public IDisposable RegisterIntervalTracking(CancellationToken cancellationToken,
             int imageTrackingIntervalMils = 3000)
         {
-            return ARSessionManager.Instance.arTrackedImageEventManager.TrackedImagesChangedObservable
+            return _arTrackedImageEventManager.TrackedImagesChangedObservable
                 .Where(_ => IsMoving.Value == MovingStatus.Moving) // 補正が始まったら発火
                 .Subscribe(_ => UniTask.Void(async () =>
                     {
                         try
                         {
-                            ARSessionManager.Instance.EnabledImageTracking = false;
+                            _arSessionManager.EnabledImageTracking = false;
                             await UniTask.WaitWhile(() => IsMoving.Value == MovingStatus.Moving,
                                 cancellationToken: cancellationToken);
                             await UniTask.Delay(TimeSpan.FromMilliseconds(imageTrackingIntervalMils),
                                 cancellationToken: cancellationToken);
-                            ARSessionManager.Instance.EnabledImageTracking = true;
+                            _arSessionManager.EnabledImageTracking = true;
                         }
                         finally
                         {
                             // arカメラの状態にあわせる
-                            ARSessionManager.Instance.EnabledImageTracking = ARSessionManager.Instance.arCamera.enabled;
+                            _arSessionManager.EnabledImageTracking = _arSessionManager.arCamera.enabled;
                         }
                     }
                 ));
