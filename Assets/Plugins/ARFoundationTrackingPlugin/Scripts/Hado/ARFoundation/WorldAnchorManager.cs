@@ -101,19 +101,15 @@ namespace Hado.ARFoundation
         private async UniTask MoveCoreAsync(Vector3 startPos, Quaternion startRot, Vector3 endPos, Quaternion endRot,
             CancellationToken cancellationToken)
         {
-            var x = 0f;
-            while (_isMoving.Value == MovingStatus.Moving)
+            var t = 0f; // 0~1 正規化した時間
+            while (!cancellationToken.IsCancellationRequested)
             {
-                x += Time.deltaTime / MoveTime;
-
-                var lerpPoint = (float)(1 - Math.Pow(1 - x, 5));
-                if (lerpPoint > 1) lerpPoint = 1f;
-
-                var targetPos = Vector3.Lerp(startPos, endPos, lerpPoint);
-                var targetRot = Quaternion.Lerp(startRot, endRot, lerpPoint);
-
-                _positionAndRotation.Value = (targetPos, targetRot);
-                if (lerpPoint >= 1) break;
+                t += Time.deltaTime / MoveTime;
+                var lerpPoint = Mathf.Clamp01(1 - Mathf.Pow(1 - t, 5)); // easeOutQuint
+                var pos = Vector3.Lerp(startPos, endPos, lerpPoint);
+                var rot = Quaternion.Lerp(startRot, endRot, lerpPoint);
+                _positionAndRotation.Value = (pos, rot);
+                if (t >= 1f) break;
                 await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate, cancellationToken);
             }
         }
