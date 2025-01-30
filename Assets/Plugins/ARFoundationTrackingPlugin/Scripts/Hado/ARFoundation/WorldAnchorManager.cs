@@ -30,11 +30,11 @@ namespace Hado.ARFoundation
         /// MovingNoiseThresholdのチェックを何回ぶん行うか
         [NonSerialized] public int NoiseCheckSampleCount = 2;
 
-        private ReactiveProperty<MovingStatus> IsMoving { get; } = new(MovingStatus.None);
+        private readonly ReactiveProperty<MovingStatus> _isMoving = new(MovingStatus.None);
 
         //ARFoundationTrackingPlugin -> WorldAnchorInitializerSampleのためにpublicのものを用意する
         //TypeCだと不要
-        public IReadOnlyReactiveProperty<MovingStatus> IsMovingProperty => IsMoving;
+        public IReadOnlyReactiveProperty<MovingStatus> IsMovingProperty => _isMoving;
 
         private readonly ReactiveProperty<(Vector3, Quaternion)> _positionAndRotation =
             new((Vector3.zero, Quaternion.identity));
@@ -58,7 +58,7 @@ namespace Hado.ARFoundation
             _positionAndRotation.Value = (_transform.position, _transform.rotation);
 
             _arTrackedImageEventManager.TrackedImagesChangedObservable
-                .Where(_ => IsMoving.Value == MovingStatus.None) // 補正中は流さない
+                .Where(_ => _isMoving.Value == MovingStatus.None) // 補正中は流さない
                 .Select(t => _arTrackedImageEventManager.GetReferenceAnchor(t.referenceImage.name))
                 .Where(x => x != null) // なぜnullがあるかはARTrackedImageEventManagerを参照
                 .Select(x => (x.transform.position, x.transform.rotation))
@@ -68,7 +68,7 @@ namespace Hado.ARFoundation
                 {
                     if (IsNoiseData(positionAndRotations))
                     {
-                        IsMoving.Value = MovingStatus.None;
+                        _isMoving.Value = MovingStatus.None;
                         return;
                     }
 
@@ -86,12 +86,12 @@ namespace Hado.ARFoundation
         {
             try
             {
-                IsMoving.Value = MovingStatus.Moving;
+                _isMoving.Value = MovingStatus.Moving;
                 await MoveCoreAsync(startPos, startRot, endPos, endRot, cancellationToken);
             }
             finally
             {
-                IsMoving.Value = MovingStatus.None;
+                _isMoving.Value = MovingStatus.None;
             }
         }
 
@@ -99,7 +99,7 @@ namespace Hado.ARFoundation
             CancellationToken cancellationToken)
         {
             var x = 0f;
-            while (IsMoving.Value == MovingStatus.Moving)
+            while (_isMoving.Value == MovingStatus.Moving)
             {
                 x += Time.deltaTime / MoveTime;
 
@@ -119,7 +119,7 @@ namespace Hado.ARFoundation
         public void CancelMove()
         {
             _cancellationTokenSource?.Cancel();
-            IsMoving.Value = MovingStatus.None;
+            _isMoving.Value = MovingStatus.None;
         }
 
         // フレーム間の移動距離が大きすぎる場合はノイズとして判定する
@@ -139,13 +139,13 @@ namespace Hado.ARFoundation
             int imageTrackingIntervalMils = 3000)
         {
             return _arTrackedImageEventManager.TrackedImagesChangedObservable
-                .Where(_ => IsMoving.Value == MovingStatus.Moving) // 補正が始まったら発火
+                .Where(_ => _isMoving.Value == MovingStatus.Moving) // 補正が始まったら発火
                 .Subscribe(_ => UniTask.Void(async () =>
                     {
                         try
                         {
                             _arSessionManager.EnabledImageTracking = false;
-                            await UniTask.WaitWhile(() => IsMoving.Value == MovingStatus.Moving,
+                            await UniTask.WaitWhile(() => _isMoving.Value == MovingStatus.Moving,
                                 cancellationToken: cancellationToken);
                             await UniTask.Delay(TimeSpan.FromMilliseconds(imageTrackingIntervalMils),
                                 cancellationToken: cancellationToken);
