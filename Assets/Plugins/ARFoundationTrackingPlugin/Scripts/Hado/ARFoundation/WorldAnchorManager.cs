@@ -38,7 +38,9 @@ namespace Hado.ARFoundation
         //TypeCだと不要
         public IReadOnlyReactiveProperty<MovingStatus> IsMovingProperty => IsMoving;
 
-        private readonly ReactiveProperty<(Vector3, Quaternion)> _positionAndRotation = new((Vector3.zero, Quaternion.identity));
+        private readonly ReactiveProperty<(Vector3, Quaternion)> _positionAndRotation =
+            new((Vector3.zero, Quaternion.identity));
+
         public IReadOnlyReactiveProperty<(Vector3, Quaternion)> PositionAndRotation => _positionAndRotation;
 
 
@@ -164,12 +166,12 @@ namespace Hado.ARFoundation
                 IsMoving.Value = MovingStatus.None;
             }
         }
-        
+
         private void OnDestroy()
         {
             _positionAndRotation.Dispose();
         }
-        
+
 #if UNITY_EDITOR
         private void Update()
         {
@@ -178,6 +180,5 @@ namespace Hado.ARFoundation
             if (_positionAndRotation.Value != t) _positionAndRotation.Value = t;
         }
 #endif
-        
     }
 }
