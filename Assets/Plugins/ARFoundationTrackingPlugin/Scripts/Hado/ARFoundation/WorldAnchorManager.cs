@@ -33,7 +33,7 @@ namespace Hado.ARFoundation
         [NonSerialized] public int NoiseCheckSampleCount = 2;
 
         private ReactiveProperty<MovingStatus> IsMoving { get; } = new(MovingStatus.None);
-        
+
         //ARFoundationTrackingPlugin -> WorldAnchorInitializerSampleのためにpublicのものを用意する
         //TypeCだと不要
         public IReadOnlyReactiveProperty<MovingStatus> IsMovingProperty => IsMoving;
