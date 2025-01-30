@@ -22,8 +22,6 @@ namespace Hado.ARFoundation
         // 移動時間
         private const float MoveTime = 1.5f;
 
-        private readonly List<float> _noiseCheckSamples = new();
-
         private CancellationTokenSource? _cancellationTokenSource;
 
         /// フレーム間の移動距離がこの値より大きい場合はノイズとして捨てる
@@ -68,9 +66,7 @@ namespace Hado.ARFoundation
                 .Buffer(NoiseCheckSampleCount + 1)
                 .Subscribe(positionAndRotations =>
                 {
-                    // フレーム間の移動距離が大きすぎる場合はノイズとして捨てる
                     IsMoving.Value = MovingStatus.Detecting;
-                    _noiseCheckSamples.Clear();
                     if (IsNoiseData(positionAndRotations))
                     {
                         IsMoving.Value = MovingStatus.None;
@@ -127,14 +123,17 @@ namespace Hado.ARFoundation
             IsMoving.Value = MovingStatus.None;
         }
 
+        // フレーム間の移動距離が大きすぎる場合はノイズとして判定する
         private bool IsNoiseData(IList<(Vector3, Quaternion)> positionAndRotations)
         {
-            for (var i = 0; i < NoiseCheckSampleCount; i++)
+            var threshold = MovingNoiseThreshold * MovingNoiseThreshold;
+            for (var i = 0; i < positionAndRotations.Count; i++)
             {
-                _noiseCheckSamples.Add(Vector3.Distance(positionAndRotations[i].Item1, positionAndRotations[i + 1].Item1));
+                var d = Vector3.SqrMagnitude(positionAndRotations[i].Item1 - positionAndRotations[i + 1].Item1);
+                if (d > threshold) return true;
             }
 
-            return _noiseCheckSamples.Any(x => x > MovingNoiseThreshold);
+            return false;
         }
 
         public IDisposable RegisterIntervalTracking(CancellationToken cancellationToken,
