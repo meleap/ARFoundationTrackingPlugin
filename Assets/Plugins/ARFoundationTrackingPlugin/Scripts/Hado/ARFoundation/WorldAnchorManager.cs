@@ -22,7 +22,7 @@ namespace Hado.ARFoundation
         // 移動時間
         private const float MoveTime = 1.5f;
 
-        private CancellationTokenSource? _cancellationTokenSource;
+        private CancellationTokenSource _cancellationTokenSource = new();
 
         /// フレーム間の移動距離がこの値より大きい場合はノイズとして捨てる
         [NonSerialized] public float MovingNoiseThreshold = 0.05f;
@@ -73,8 +73,8 @@ namespace Hado.ARFoundation
                     }
 
                     var last = positionAndRotations.Last();
-                    _cancellationTokenSource?.Cancel();
-                    _cancellationTokenSource?.Dispose();
+                    _cancellationTokenSource.Cancel();
+                    _cancellationTokenSource.Dispose();
                     _cancellationTokenSource = new CancellationTokenSource();
                     MoveAsync(_transform.position, _transform.rotation, last.position, last.rotation,
                         _cancellationTokenSource.Token).Forget();
@@ -118,7 +118,7 @@ namespace Hado.ARFoundation
 
         public void CancelMove()
         {
-            _cancellationTokenSource?.Cancel();
+            _cancellationTokenSource.Cancel();
             _isMoving.Value = MovingStatus.None;
         }
 
