@@ -69,14 +69,9 @@ namespace Hado.ARFoundation
                     return (pos, rot);
                 })
                 .Buffer(NoiseCheckSampleCount + 1)
+                .Where(l => !IsNoiseData(l))
                 .Subscribe(positionAndRotations =>
                 {
-                    if (IsNoiseData(positionAndRotations))
-                    {
-                        _isMoving.Value = MovingStatus.None;
-                        return;
-                    }
-
                     var last = positionAndRotations.Last();
                     _cancellationTokenSource.Cancel();
                     _cancellationTokenSource.Dispose();
