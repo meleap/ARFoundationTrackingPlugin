@@ -86,12 +86,12 @@ namespace Hado.ARFoundation
                     _cancellationTokenSource?.Cancel();
                     _cancellationTokenSource?.Dispose();
                     _cancellationTokenSource = new CancellationTokenSource();
-                    MoveToX(_transform.position, _transform.rotation, positions[2], moveEndRotation,
+                    MoveAsync(_transform.position, _transform.rotation, positions[2], moveEndRotation,
                         _cancellationTokenSource.Token).Forget();
                 }).AddTo(this);
         }
 
-        private async UniTask MoveToX(Vector3 startPos, Quaternion startRot, Vector3 endPos, Quaternion endRot,
+        private async UniTask MoveAsync(Vector3 startPos, Quaternion startRot, Vector3 endPos, Quaternion endRot,
             CancellationToken cancellationToken)
         {
             try
@@ -102,6 +102,27 @@ namespace Hado.ARFoundation
             finally
             {
                 IsMoving.Value = MovingStatus.None;
+            }
+        }
+
+        private async UniTask MoveCoreAsync(Vector3 startPos, Quaternion startRot, Vector3 endPos, Quaternion endRot,
+            CancellationToken cancellationToken)
+        {
+            var x = 0f;
+            while (IsMoving.Value == MovingStatus.Moving)
+            {
+                x += Time.deltaTime / MoveTime;
+
+                var lerpPoint = (float)(1 - Math.Pow(1 - x, 5));
+                if (lerpPoint > 1) lerpPoint = 1f;
+
+                var targetPos = Vector3.Lerp(startPos, endPos, lerpPoint);
+                var targetRot = Quaternion.Lerp(startRot, endRot, lerpPoint);
+
+                _transform.SetPositionAndRotation(targetPos, targetRot);
+                _positionAndRotation.Value = (targetPos, targetRot);
+                if (lerpPoint >= 1) break;
+                await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate, cancellationToken);
             }
         }
 
@@ -144,27 +165,6 @@ namespace Hado.ARFoundation
                         }
                     }
                 ));
-        }
-
-        private async UniTask MoveCoreAsync(Vector3 startPos, Quaternion startRot, Vector3 endPos, Quaternion endRot,
-            CancellationToken cancellationToken)
-        {
-            var x = 0f;
-            while (IsMoving.Value == MovingStatus.Moving)
-            {
-                x += Time.deltaTime / MoveTime;
-
-                var lerpPoint = (float)(1 - Math.Pow(1 - x, 5));
-                if (lerpPoint > 1) lerpPoint = 1f;
-
-                var targetPos = Vector3.Lerp(startPos, endPos, lerpPoint);
-                var targetRot = Quaternion.Lerp(startRot, endRot, lerpPoint);
-
-                _transform.SetPositionAndRotation(targetPos, targetRot);
-                _positionAndRotation.Value = (targetPos, targetRot);
-                if (lerpPoint >= 1) break;
-                await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate, cancellationToken);
-            }
         }
 
         private void OnDestroy()
