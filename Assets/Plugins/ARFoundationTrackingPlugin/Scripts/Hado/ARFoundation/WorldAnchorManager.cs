@@ -57,7 +57,6 @@ namespace Hado.ARFoundation
             ARSessionManager.Instance.arTrackedImageEventManager.TrackedImagesChangedObservable
                 .Where(_ => IsMoving.Value == MovingStatus.None) // 補正中は流さない
                 .Do(t => PositionManager.Instance.LastDetectedAnchorName = t.referenceImage.name)
-                .Do(t => Debug.Log($"{t.referenceImage.name} detected"))
                 .Select(t => ARSessionManager.Instance.arTrackedImageEventManager.GetReferenceAnchor(t.referenceImage
                     .name))
                 .Where(x => x != null) // なぜnullがあるかはARTrackedImageEventManagerを参照
@@ -98,10 +97,7 @@ namespace Hado.ARFoundation
             for (var i = 0; i < NoiseCheckSampleCount; i++)
             {
                 _noiseCheckSamples.Add(Vector3.Distance(positions[i], positions[i + 1]));
-                Debug.Log($"Noise check[{i}]: {Vector3.Distance(positions[i], positions[i + 1]):F6}");
             }
-
-            Debug.Log($"Check: {_noiseCheckSamples.Any(x => x > MovingNoiseThreshold)}");
 
             return _noiseCheckSamples.Any(x => x > MovingNoiseThreshold);
         }
@@ -109,7 +105,6 @@ namespace Hado.ARFoundation
         public IDisposable RegisterIntervalTracking(CancellationToken cancellationToken,
             int imageTrackingIntervalMils = 3000)
         {
-            Debug.Log("RegisterIntervalTracking");
             return ARSessionManager.Instance.arTrackedImageEventManager.TrackedImagesChangedObservable
                 .Where(_ => IsMoving.Value == MovingStatus.Moving) // 補正が始まったら発火
                 .Subscribe(_ => UniTask.Void(async () =>
