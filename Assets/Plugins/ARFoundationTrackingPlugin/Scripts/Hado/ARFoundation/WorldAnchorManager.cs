@@ -126,7 +126,7 @@ namespace Hado.ARFoundation
         private bool IsNoiseData(IList<(Vector3, Quaternion)> positionAndRotations)
         {
             var threshold = MovingNoiseThreshold * MovingNoiseThreshold;
-            for (var i = 0; i < positionAndRotations.Count; i++)
+            for (var i = 0; i < positionAndRotations.Count - 1; i++)
             {
                 var d = Vector3.SqrMagnitude(positionAndRotations[i].Item1 - positionAndRotations[i + 1].Item1);
                 if (d > threshold) return true;
