@@ -58,11 +58,11 @@ namespace Hado.ARFoundation
             _positionAndRotation.Value = (_transform.position, _transform.rotation);
 
             _arTrackedImageEventManager.TrackedImagesChangedObservable
+                .Where(_ => ARSession.state >= ARSessionState.SessionInitializing)
                 .Where(_ => _isMoving.Value == MovingStatus.None) // 補正中は流さない
                 .Select(t => _arTrackedImageEventManager.GetReferenceAnchor(t.referenceImage.name))
                 .Where(x => x != null) // なぜnullがあるかはARTrackedImageEventManagerを参照
                 .Select(x => (x.transform.position, x.transform.rotation))
-                .Where(_ => ARSession.state >= ARSessionState.SessionInitializing)
                 .Buffer(NoiseCheckSampleCount + 1)
                 .Subscribe(positionAndRotations =>
                 {
