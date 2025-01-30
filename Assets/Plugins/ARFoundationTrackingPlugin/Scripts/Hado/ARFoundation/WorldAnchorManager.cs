@@ -135,8 +135,6 @@ namespace Hado.ARFoundation
             IsMoving.Value = MovingStatus.Moving;
 
             var x = 0f;
-            Vector3 targetPos;
-            Quaternion targetRot;
 
             try
             {
@@ -152,8 +150,8 @@ namespace Hado.ARFoundation
                         lerpPoint = 1f;
                     }
 
-                    targetPos = Vector3.Lerp(startPos, endPos, lerpPoint);
-                    targetRot = Quaternion.Lerp(startRot, endRot, lerpPoint);
+                    var targetPos = Vector3.Lerp(startPos, endPos, lerpPoint);
+                    var targetRot = Quaternion.Lerp(startRot, endRot, lerpPoint);
 
                     _transform.SetPositionAndRotation(targetPos, targetRot);
                     _positionAndRotation.Value = (targetPos, targetRot);
