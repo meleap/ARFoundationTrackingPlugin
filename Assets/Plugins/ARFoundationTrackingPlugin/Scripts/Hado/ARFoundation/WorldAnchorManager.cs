@@ -66,7 +66,6 @@ namespace Hado.ARFoundation
                 .Buffer(NoiseCheckSampleCount + 1)
                 .Subscribe(positionAndRotations =>
                 {
-                    IsMoving.Value = MovingStatus.Detecting;
                     if (IsNoiseData(positionAndRotations))
                     {
                         IsMoving.Value = MovingStatus.None;
