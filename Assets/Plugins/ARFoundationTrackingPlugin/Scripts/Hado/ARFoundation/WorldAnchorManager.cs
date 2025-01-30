@@ -175,8 +175,7 @@ namespace Hado.ARFoundation
         {
             // デバッグ用に、Editorだったらインスペクタでposition, rotationが変更されたことを検知する
             _transform.GetPositionAndRotation(out var pos, out var rot);
-            var t = (pos, rot);
-            if (_positionAndRotation.Value != t) _positionAndRotation.Value = t;
+            _positionAndRotation.Value = (pos, rot);
         }
 #endif
     }
