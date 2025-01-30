@@ -57,6 +57,9 @@ namespace Hado.ARFoundation
             // WindowsEYEの場合は、ここまでにposition, rotationが更新されている
             _transform.GetPositionAndRotation(out var position, out var rotation);
             _positionAndRotation.Value = (position, rotation);
+            _positionAndRotation
+                .Subscribe(x => _transform.SetPositionAndRotation(x.Item1, x.Item2))
+                .AddTo(this);
 
             _arTrackedImageEventManager.TrackedImagesChangedObservable
                 .Where(_ => ARSession.state >= ARSessionState.SessionInitializing)
@@ -109,7 +112,6 @@ namespace Hado.ARFoundation
                 var targetPos = Vector3.Lerp(startPos, endPos, lerpPoint);
                 var targetRot = Quaternion.Lerp(startRot, endRot, lerpPoint);
 
-                _transform.SetPositionAndRotation(targetPos, targetRot);
                 _positionAndRotation.Value = (targetPos, targetRot);
                 if (lerpPoint >= 1) break;
                 await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate, cancellationToken);
