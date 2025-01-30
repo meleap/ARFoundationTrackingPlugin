@@ -79,18 +79,17 @@ namespace Hado.ARFoundation
                     _cancellationTokenSource.Cancel();
                     _cancellationTokenSource.Dispose();
                     _cancellationTokenSource = new CancellationTokenSource();
-                    _transform.GetPositionAndRotation(out var pos, out var rot);
-                    MoveAsync(pos, rot, last.pos, last.rot, _cancellationTokenSource.Token).Forget();
+                    MoveAsync(_positionAndRotation.Value, last, _cancellationTokenSource.Token).Forget();
                 }).AddTo(this);
         }
 
-        private async UniTask MoveAsync(Vector3 startPos, Quaternion startRot, Vector3 endPos, Quaternion endRot,
+        private async UniTask MoveAsync((Vector3, Quaternion) start, (Vector3, Quaternion) end,
             CancellationToken cancellationToken)
         {
             try
             {
                 _isMoving.Value = MovingStatus.Moving;
-                await MoveCoreAsync(startPos, startRot, endPos, endRot, cancellationToken);
+                await MoveCoreAsync(start, end, cancellationToken);
             }
             finally
             {
@@ -98,7 +97,7 @@ namespace Hado.ARFoundation
             }
         }
 
-        private async UniTask MoveCoreAsync(Vector3 startPos, Quaternion startRot, Vector3 endPos, Quaternion endRot,
+        private async UniTask MoveCoreAsync((Vector3, Quaternion) start, (Vector3, Quaternion) end,
             CancellationToken cancellationToken)
         {
             var t = 0f; // 0~1 正規化した時間
@@ -106,8 +105,8 @@ namespace Hado.ARFoundation
             {
                 t += Time.deltaTime / MoveTime;
                 var lerpPoint = Mathf.Clamp01(1 - Mathf.Pow(1 - t, 5)); // easeOutQuint
-                var pos = Vector3.Lerp(startPos, endPos, lerpPoint);
-                var rot = Quaternion.Lerp(startRot, endRot, lerpPoint);
+                var pos = Vector3.Lerp(start.Item1, end.Item1, lerpPoint);
+                var rot = Quaternion.Lerp(start.Item2, end.Item2, lerpPoint);
                 _positionAndRotation.Value = (pos, rot);
                 if (t >= 1f) break;
                 await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate, cancellationToken);
