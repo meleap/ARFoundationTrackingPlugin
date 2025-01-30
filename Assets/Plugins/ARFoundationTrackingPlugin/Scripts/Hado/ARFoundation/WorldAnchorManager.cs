@@ -149,7 +149,6 @@ namespace Hado.ARFoundation
                                 cancellationToken: cancellationToken);
                             await UniTask.Delay(TimeSpan.FromMilliseconds(imageTrackingIntervalMils),
                                 cancellationToken: cancellationToken);
-                            _arSessionManager.EnabledImageTracking = true;
                         }
                         finally
                         {
