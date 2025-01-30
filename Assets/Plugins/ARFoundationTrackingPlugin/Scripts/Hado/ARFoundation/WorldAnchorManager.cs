@@ -22,8 +22,6 @@ namespace Hado.ARFoundation
         // 移動時間
         private const float MoveTime = 1.5f;
 
-        private CancellationTokenSource _cancellationTokenSource = new();
-
         /// フレーム間の移動距離がこの値より大きい場合はノイズとして捨てる
         [NonSerialized] public float MovingNoiseThreshold = 0.05f;
 
@@ -40,6 +38,8 @@ namespace Hado.ARFoundation
             new((Vector3.zero, Quaternion.identity));
 
         public IReadOnlyReactiveProperty<(Vector3, Quaternion)> PositionAndRotation => _positionAndRotation;
+
+        private CancellationTokenSource _cancellationTokenSource = new();
 
         private Transform _transform = null!;
         private ARSessionManager _arSessionManager = null!;
@@ -124,6 +124,8 @@ namespace Hado.ARFoundation
         public void CancelMove()
         {
             _cancellationTokenSource.Cancel();
+            _cancellationTokenSource.Dispose();
+            _cancellationTokenSource = new CancellationTokenSource();
             _isMoving.Value = MovingStatus.None;
         }
 
@@ -168,6 +170,9 @@ namespace Hado.ARFoundation
         private void OnDestroy()
         {
             _positionAndRotation.Dispose();
+            _isMoving.Dispose();
+            _cancellationTokenSource.Cancel();
+            _cancellationTokenSource.Dispose();
         }
 
 #if UNITY_EDITOR
