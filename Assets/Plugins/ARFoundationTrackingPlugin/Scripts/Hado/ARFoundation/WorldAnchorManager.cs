@@ -55,14 +55,19 @@ namespace Hado.ARFoundation
         private void Start()
         {
             // WindowsEYEの場合は、ここまでにposition, rotationが更新されている
-            _positionAndRotation.Value = (_transform.position, _transform.rotation);
+            _transform.GetPositionAndRotation(out var pos, out var rot);
+            _positionAndRotation.Value = (pos, rot);
 
             _arTrackedImageEventManager.TrackedImagesChangedObservable
                 .Where(_ => ARSession.state >= ARSessionState.SessionInitializing)
                 .Where(_ => _isMoving.Value == MovingStatus.None) // 補正中は流さない
                 .Select(t => _arTrackedImageEventManager.GetReferenceAnchor(t.referenceImage.name))
                 .Where(x => x != null) // なぜnullがあるかはARTrackedImageEventManagerを参照
-                .Select(x => (x.transform.position, x.transform.rotation))
+                .Select(x =>
+                {
+                    x.transform.GetPositionAndRotation(out var pos, out var rot);
+                    return (pos, rot);
+                })
                 .Buffer(NoiseCheckSampleCount + 1)
                 .Subscribe(positionAndRotations =>
                 {
@@ -76,8 +81,8 @@ namespace Hado.ARFoundation
                     _cancellationTokenSource.Cancel();
                     _cancellationTokenSource.Dispose();
                     _cancellationTokenSource = new CancellationTokenSource();
-                    MoveAsync(_transform.position, _transform.rotation, last.position, last.rotation,
-                        _cancellationTokenSource.Token).Forget();
+                    _transform.GetPositionAndRotation(out var pos, out var rot);
+                    MoveAsync(pos, rot, last.pos, last.rot, _cancellationTokenSource.Token).Forget();
                 }).AddTo(this);
         }
 
@@ -169,7 +174,8 @@ namespace Hado.ARFoundation
         private void Update()
         {
             // デバッグ用に、Editorだったらインスペクタでposition, rotationが変更されたことを検知する
-            var t = (_transform.position, _transform.rotation);
+            _transform.GetPositionAndRotation(out var pos, out var rot);
+            var t = (pos, rot);
             if (_positionAndRotation.Value != t) _positionAndRotation.Value = t;
         }
 #endif
