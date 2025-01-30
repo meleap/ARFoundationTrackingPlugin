@@ -91,6 +91,20 @@ namespace Hado.ARFoundation
                 }).AddTo(this);
         }
 
+        private async UniTask MoveToX(Vector3 startPos, Quaternion startRot, Vector3 endPos, Quaternion endRot,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                IsMoving.Value = MovingStatus.Moving;
+                await MoveCoreAsync(startPos, startRot, endPos, endRot, cancellationToken);
+            }
+            finally
+            {
+                IsMoving.Value = MovingStatus.None;
+            }
+        }
+
         public void CancelMove()
         {
             _cancellationTokenSource?.Cancel();
@@ -132,39 +146,24 @@ namespace Hado.ARFoundation
                 ));
         }
 
-        private async UniTask MoveToX(Vector3 startPos, Quaternion startRot, Vector3 endPos, Quaternion endRot,
+        private async UniTask MoveCoreAsync(Vector3 startPos, Quaternion startRot, Vector3 endPos, Quaternion endRot,
             CancellationToken cancellationToken)
         {
-            IsMoving.Value = MovingStatus.Moving;
-
             var x = 0f;
-
-            try
+            while (IsMoving.Value == MovingStatus.Moving)
             {
-                while (IsMoving.Value == MovingStatus.Moving)
-                {
-                    x += Time.deltaTime / MoveTime;
+                x += Time.deltaTime / MoveTime;
 
-                    var lerpPoint = (float)(1 - Math.Pow(1 - x, 5));
+                var lerpPoint = (float)(1 - Math.Pow(1 - x, 5));
+                if (lerpPoint > 1) lerpPoint = 1f;
 
-                    if (lerpPoint > 1)
-                    {
-                        IsMoving.Value = MovingStatus.None;
-                        lerpPoint = 1f;
-                    }
+                var targetPos = Vector3.Lerp(startPos, endPos, lerpPoint);
+                var targetRot = Quaternion.Lerp(startRot, endRot, lerpPoint);
 
-                    var targetPos = Vector3.Lerp(startPos, endPos, lerpPoint);
-                    var targetRot = Quaternion.Lerp(startRot, endRot, lerpPoint);
-
-                    _transform.SetPositionAndRotation(targetPos, targetRot);
-                    _positionAndRotation.Value = (targetPos, targetRot);
-
-                    await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate, cancellationToken);
-                }
-            }
-            finally
-            {
-                IsMoving.Value = MovingStatus.None;
+                _transform.SetPositionAndRotation(targetPos, targetRot);
+                _positionAndRotation.Value = (targetPos, targetRot);
+                if (lerpPoint >= 1) break;
+                await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate, cancellationToken);
             }
         }
 
