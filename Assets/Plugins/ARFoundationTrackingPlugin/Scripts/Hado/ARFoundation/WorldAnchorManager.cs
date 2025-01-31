@@ -138,25 +138,23 @@ namespace Hado.ARFoundation
         public IDisposable RegisterIntervalTracking(CancellationToken cancellationToken,
             int imageTrackingIntervalMils = 3000)
         {
-            return _arTrackedImageEventManager.TrackedImagesChangedObservable
-                .Where(_ => _isMoving.Value == MovingStatus.Moving) // 補正が始まったら発火
-                .Subscribe(_ => UniTask.Void(async () =>
-                    {
-                        try
-                        {
-                            _arSessionManager.EnabledImageTracking = false;
-                            await UniTask.WaitWhile(() => _isMoving.Value == MovingStatus.Moving,
-                                cancellationToken: cancellationToken);
-                            await UniTask.Delay(TimeSpan.FromMilliseconds(imageTrackingIntervalMils),
-                                cancellationToken: cancellationToken);
-                        }
-                        finally
-                        {
-                            // arカメラの状態にあわせる
-                            _arSessionManager.EnabledImageTracking = _arSessionManager.arCamera.enabled;
-                        }
-                    }
-                ));
+            var compositeDisposable = new CompositeDisposable();
+            cancellationToken.Register(() => compositeDisposable.Dispose());
+            // WorldAnchorの移動中はトラッキングを無効にする
+            _isMoving
+                .SkipLatestValueOnSubscribe()
+                .Where(s => s == MovingStatus.Moving)
+                .Subscribe(_ => _arSessionManager.EnabledImageTracking = false)
+                .AddTo(compositeDisposable);
+            // WorldAnchorの移動が終わってしばらくしたらトラッキングを元に戻す
+            _isMoving
+                .SkipLatestValueOnSubscribe()
+                .Where(s => s != MovingStatus.Moving)
+                .Delay(TimeSpan.FromMilliseconds(imageTrackingIntervalMils))
+                .Subscribe(_ =>
+                    _arSessionManager.EnabledImageTracking = _arSessionManager.arCamera.enabled) // ARカメラの状態にあわせる
+                .AddTo(compositeDisposable);
+            return compositeDisposable;
         }
 
         private void OnDestroy()
