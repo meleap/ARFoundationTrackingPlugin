@@ -19,8 +19,7 @@ namespace Hado.ARFoundation
 
     public class WorldAnchorManager : MonoBehaviour
     {
-        // 移動時間
-        private const float MoveTime = 1.5f;
+        private readonly TimeSpan movingTime = TimeSpan.FromSeconds(1.5f);
 
         /// フレーム間の移動距離がこの値より大きい場合はノイズとして捨てる
         [NonSerialized] public float MovingNoiseThreshold = 0.05f;
@@ -92,7 +91,7 @@ namespace Hado.ARFoundation
                 {
                     _positionAndRotation.Value = (end.Item1, end.Item2); // 初めてトラッキングしたときは即座に移動させる
                     // MoveTime の間移動したことにして、ImageTrackingの頻度を変えないようにします
-                    await UniTask.Delay(TimeSpan.FromSeconds(MoveTime), cancellationToken: cancellationToken);
+                    await UniTask.Delay(movingTime, cancellationToken: cancellationToken);
                 }
                 else if (Vector3.Distance(end.Item1, start.Item1) < 0.05f &&
                          Quaternion.Angle(start.Item2, end.Item2) < 1.5f)
@@ -101,7 +100,7 @@ namespace Hado.ARFoundation
                     // 物理的なカメラの位置が固定のときに小さな移動を繰り返すと揺れが目立ってしまうため、移動を抑制します
                     // 例えば角度が1度ずれると、8m先では0.14m程度ずれます
                     // MoveTime の間移動したことにして、ImageTrackingの頻度を変えないようにします
-                    await UniTask.Delay(TimeSpan.FromSeconds(MoveTime), cancellationToken: cancellationToken);
+                    await UniTask.Delay(movingTime, cancellationToken: cancellationToken);
                 }
                 else
                 {
@@ -122,7 +121,7 @@ namespace Hado.ARFoundation
             var t = 0f; // 0~1 正規化した時間
             while (!cancellationToken.IsCancellationRequested)
             {
-                t += Time.deltaTime / MoveTime;
+                t += Time.deltaTime / (float)movingTime.TotalSeconds;
                 var lerpPoint = Mathf.Clamp01(1 - Mathf.Pow(1 - t, 5)); // easeOutQuint
                 var pos = Vector3.Lerp(start.Item1, end.Item1, lerpPoint);
                 var rot = Quaternion.Lerp(start.Item2, end.Item2, lerpPoint);
@@ -154,8 +153,7 @@ namespace Hado.ARFoundation
             return false;
         }
 
-        public IDisposable RegisterIntervalTracking(CancellationToken cancellationToken,
-            int imageTrackingIntervalMils = 3000)
+        public IDisposable RegisterIntervalTracking(CancellationToken cancellationToken, TimeSpan interval)
         {
             var compositeDisposable = new CompositeDisposable();
             cancellationToken.Register(() => compositeDisposable.Dispose());
@@ -169,7 +167,7 @@ namespace Hado.ARFoundation
             _isMoving
                 .SkipLatestValueOnSubscribe()
                 .Where(s => s != MovingStatus.Moving)
-                .Delay(TimeSpan.FromMilliseconds(imageTrackingIntervalMils))
+                .Delay(interval)
                 .Subscribe(_ =>
                     _arSessionManager.EnabledImageTracking = _arSessionManager.arCamera.enabled) // ARカメラの状態にあわせる
                 .AddTo(compositeDisposable);
