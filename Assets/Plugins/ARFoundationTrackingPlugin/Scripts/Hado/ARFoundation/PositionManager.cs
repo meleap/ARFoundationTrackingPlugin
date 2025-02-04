@@ -17,8 +17,6 @@ namespace Hado.ARFoundation
 
         public GameObject WorldAnchor { get; set; }
 
-        public string LastDetectedAnchorName { get; set; }
-
         public Vector3 GetCalibratedPosition(Vector3 position)
         {
             return WorldAnchor.transform.InverseTransformPoint(position);

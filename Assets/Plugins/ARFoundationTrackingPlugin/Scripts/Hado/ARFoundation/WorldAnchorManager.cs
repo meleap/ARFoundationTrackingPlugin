@@ -22,167 +22,179 @@ namespace Hado.ARFoundation
         // 移動時間
         private const float MoveTime = 1.5f;
 
-        private readonly List<float> _noiseCheckSamples = new();
-
-        private CancellationTokenSource? _cancellationTokenSource;
-
         /// フレーム間の移動距離がこの値より大きい場合はノイズとして捨てる
         [NonSerialized] public float MovingNoiseThreshold = 0.05f;
 
         /// MovingNoiseThresholdのチェックを何回ぶん行うか
         [NonSerialized] public int NoiseCheckSampleCount = 2;
 
-        private ReactiveProperty<MovingStatus> IsMoving { get; } = new(MovingStatus.None);
-        
+        private readonly ReactiveProperty<MovingStatus> _isMoving = new(MovingStatus.None);
+
+        private bool _isTrackedOnce = false;
+
         //ARFoundationTrackingPlugin -> WorldAnchorInitializerSampleのためにpublicのものを用意する
         //TypeCだと不要
-        public IReadOnlyReactiveProperty<MovingStatus> IsMovingProperty => IsMoving;
+        public IReadOnlyReactiveProperty<MovingStatus> IsMovingProperty => _isMoving;
 
-        private readonly ReactiveProperty<(Vector3, Quaternion)> _positionAndRotation = new((Vector3.zero, Quaternion.identity));
+        private readonly ReactiveProperty<(Vector3, Quaternion)> _positionAndRotation =
+            new((Vector3.zero, Quaternion.identity));
+
         public IReadOnlyReactiveProperty<(Vector3, Quaternion)> PositionAndRotation => _positionAndRotation;
 
+        private CancellationTokenSource _cancellationTokenSource = new();
 
         private Transform _transform = null!;
+        private ARSessionManager _arSessionManager = null!;
+        private ARTrackedImageEventManager _arTrackedImageEventManager = null!;
 
         private void Awake()
         {
             _transform = transform;
+            _arSessionManager = ARSessionManager.Instance;
+            _arTrackedImageEventManager = _arSessionManager.arTrackedImageEventManager;
         }
 
         private void Start()
         {
             // WindowsEYEの場合は、ここまでにposition, rotationが更新されている
-            _positionAndRotation.Value = (_transform.position, _transform.rotation);
+            _transform.GetPositionAndRotation(out var position, out var rotation);
+            _positionAndRotation.Value = (position, rotation);
+            _positionAndRotation
+                .Subscribe(x => _transform.SetPositionAndRotation(x.Item1, x.Item2))
+                .AddTo(this);
 
-            ARSessionManager.Instance.arTrackedImageEventManager.TrackedImagesChangedObservable
-                .Where(_ => IsMoving.Value == MovingStatus.None) // 補正中は流さない
-                .Do(t => PositionManager.Instance.LastDetectedAnchorName = t.referenceImage.name)
-                .Do(t => Debug.Log($"{t.referenceImage.name} detected"))
-                .Select(t => ARSessionManager.Instance.arTrackedImageEventManager.GetReferenceAnchor(t.referenceImage
-                    .name))
-                .Where(x => x != null) // なぜnullがあるかはARTrackedImageEventManagerを参照
-                .Select(x => x.transform.position)
+            _arTrackedImageEventManager.TrackedImagesChangedObservable
                 .Where(_ => ARSession.state >= ARSessionState.SessionInitializing)
-                .Buffer(NoiseCheckSampleCount + 1)
-                .Subscribe(positions =>
+                .Where(_ => _isMoving.Value == MovingStatus.None) // 補正中は流さない
+                .Select(t => _arTrackedImageEventManager.GetReferenceAnchor(t.referenceImage.name))
+                .Where(x => x != null) // なぜnullがあるかはARTrackedImageEventManagerを参照
+                .Select(x =>
                 {
-                    // フレーム間の移動距離が大きすぎる場合はノイズとして捨てる
-                    IsMoving.Value = MovingStatus.Detecting;
-                    _noiseCheckSamples.Clear();
-                    if (IsNoiseData(positions))
-                    {
-                        IsMoving.Value = MovingStatus.None;
-                        return;
-                    }
-
-                    var moveEndRotation =
-                        ARSessionManager.Instance.arTrackedImageEventManager.GetReferenceAnchor(PositionManager.Instance
-                            .LastDetectedAnchorName).transform.rotation;
-
-                    _cancellationTokenSource?.Cancel();
-                    _cancellationTokenSource?.Dispose();
+                    x.transform.GetPositionAndRotation(out var pos, out var rot);
+                    return (pos, rot);
+                })
+                .Buffer(NoiseCheckSampleCount + 1)
+                .Where(l => !IsNoiseData(l))
+                .Select(l => l.Last()) // 最新のデータを取得
+                .Subscribe(end =>
+                {
+                    _cancellationTokenSource.Cancel();
+                    _cancellationTokenSource.Dispose();
                     _cancellationTokenSource = new CancellationTokenSource();
-                    MoveToX(_transform.position, _transform.rotation, positions[2], moveEndRotation,
-                        _cancellationTokenSource.Token).Forget();
+                    var start = _positionAndRotation.Value;
+                    MoveAsync(start, end, _cancellationTokenSource.Token).Forget();
                 }).AddTo(this);
+        }
+
+        private async UniTask MoveAsync((Vector3, Quaternion) start, (Vector3, Quaternion) end,
+            CancellationToken cancellationToken)
+        {
+            _isMoving.Value = MovingStatus.Moving;
+            try
+            {
+                if (!_isTrackedOnce)
+                {
+                    _positionAndRotation.Value = (end.Item1, end.Item2); // 初めてトラッキングしたときは即座に移動させる
+                    // MoveTime の間移動したことにして、ImageTrackingの頻度を変えないようにします
+                    await UniTask.Delay(TimeSpan.FromSeconds(MoveTime), cancellationToken: cancellationToken);
+                }
+                else if (Vector3.Distance(end.Item1, start.Item1) < 0.05f &&
+                         Quaternion.Angle(start.Item2, end.Item2) < 1.5f)
+                {
+                    // トラッキングが安定している場合はキャリブレーションが不要と判断して移動させないようにします
+                    // 物理的なカメラの位置が固定のときに小さな移動を繰り返すと揺れが目立ってしまうため、移動を抑制します
+                    // 例えば角度が1度ずれると、8m先では0.14m程度ずれます
+                    // MoveTime の間移動したことにして、ImageTrackingの頻度を変えないようにします
+                    await UniTask.Delay(TimeSpan.FromSeconds(MoveTime), cancellationToken: cancellationToken);
+                }
+                else
+                {
+                    await MoveCoreAsync(start, end, cancellationToken);
+                }
+
+                _isTrackedOnce = true;
+            }
+            finally
+            {
+                _isMoving.Value = MovingStatus.None;
+            }
+        }
+
+        private async UniTask MoveCoreAsync((Vector3, Quaternion) start, (Vector3, Quaternion) end,
+            CancellationToken cancellationToken)
+        {
+            var t = 0f; // 0~1 正規化した時間
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                t += Time.deltaTime / MoveTime;
+                var lerpPoint = Mathf.Clamp01(1 - Mathf.Pow(1 - t, 5)); // easeOutQuint
+                var pos = Vector3.Lerp(start.Item1, end.Item1, lerpPoint);
+                var rot = Quaternion.Lerp(start.Item2, end.Item2, lerpPoint);
+                _positionAndRotation.Value = (pos, rot);
+                if (t >= 1f) break;
+                await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate, cancellationToken);
+            }
         }
 
         public void CancelMove()
         {
-            _cancellationTokenSource?.Cancel();
-            IsMoving.Value = MovingStatus.None;
+            _cancellationTokenSource.Cancel();
+            _cancellationTokenSource.Dispose();
+            _cancellationTokenSource = new CancellationTokenSource();
+            _isMoving.Value = MovingStatus.None;
+            _isTrackedOnce = false;
         }
 
-        private bool IsNoiseData(IList<Vector3> positions)
+        // フレーム間の移動距離が大きすぎる場合はノイズとして判定する
+        private bool IsNoiseData(IList<(Vector3, Quaternion)> positionAndRotations)
         {
-            for (var i = 0; i < NoiseCheckSampleCount; i++)
+            var threshold = MovingNoiseThreshold * MovingNoiseThreshold;
+            for (var i = 0; i < positionAndRotations.Count - 1; i++)
             {
-                _noiseCheckSamples.Add(Vector3.Distance(positions[i], positions[i + 1]));
-                Debug.Log($"Noise check[{i}]: {Vector3.Distance(positions[i], positions[i + 1]):F6}");
+                var d = Vector3.SqrMagnitude(positionAndRotations[i].Item1 - positionAndRotations[i + 1].Item1);
+                if (d > threshold) return true;
             }
 
-            Debug.Log($"Check: {_noiseCheckSamples.Any(x => x > MovingNoiseThreshold)}");
-
-            return _noiseCheckSamples.Any(x => x > MovingNoiseThreshold);
+            return false;
         }
 
         public IDisposable RegisterIntervalTracking(CancellationToken cancellationToken,
             int imageTrackingIntervalMils = 3000)
         {
-            Debug.Log("RegisterIntervalTracking");
-            return ARSessionManager.Instance.arTrackedImageEventManager.TrackedImagesChangedObservable
-                .Where(_ => IsMoving.Value == MovingStatus.Moving) // 補正が始まったら発火
-                .Subscribe(_ => UniTask.Void(async () =>
-                    {
-                        try
-                        {
-                            ARSessionManager.Instance.EnabledImageTracking = false;
-                            await UniTask.WaitWhile(() => IsMoving.Value == MovingStatus.Moving,
-                                cancellationToken: cancellationToken);
-                            await UniTask.Delay(TimeSpan.FromMilliseconds(imageTrackingIntervalMils),
-                                cancellationToken: cancellationToken);
-                            ARSessionManager.Instance.EnabledImageTracking = true;
-                        }
-                        finally
-                        {
-                            // arカメラの状態にあわせる
-                            ARSessionManager.Instance.EnabledImageTracking = ARSessionManager.Instance.arCamera.enabled;
-                        }
-                    }
-                ));
+            var compositeDisposable = new CompositeDisposable();
+            cancellationToken.Register(() => compositeDisposable.Dispose());
+            // WorldAnchorの移動中はトラッキングを無効にする
+            _isMoving
+                .SkipLatestValueOnSubscribe()
+                .Where(s => s == MovingStatus.Moving)
+                .Subscribe(_ => _arSessionManager.EnabledImageTracking = false)
+                .AddTo(compositeDisposable);
+            // WorldAnchorの移動が終わってしばらくしたらトラッキングを元に戻す
+            _isMoving
+                .SkipLatestValueOnSubscribe()
+                .Where(s => s != MovingStatus.Moving)
+                .Delay(TimeSpan.FromMilliseconds(imageTrackingIntervalMils))
+                .Subscribe(_ =>
+                    _arSessionManager.EnabledImageTracking = _arSessionManager.arCamera.enabled) // ARカメラの状態にあわせる
+                .AddTo(compositeDisposable);
+            return compositeDisposable;
         }
 
-        private async UniTask MoveToX(Vector3 startPos, Quaternion startRot, Vector3 endPos, Quaternion endRot,
-            CancellationToken cancellationToken)
-        {
-            IsMoving.Value = MovingStatus.Moving;
-
-            var x = 0f;
-            Vector3 targetPos;
-            Quaternion targetRot;
-
-            try
-            {
-                while (IsMoving.Value == MovingStatus.Moving)
-                {
-                    x += Time.deltaTime / MoveTime;
-
-                    var lerpPoint = (float)(1 - Math.Pow(1 - x, 5));
-
-                    if (lerpPoint > 1)
-                    {
-                        IsMoving.Value = MovingStatus.None;
-                        lerpPoint = 1f;
-                    }
-
-                    targetPos = Vector3.Lerp(startPos, endPos, lerpPoint);
-                    targetRot = Quaternion.Lerp(startRot, endRot, lerpPoint);
-
-                    _transform.SetPositionAndRotation(targetPos, targetRot);
-                    _positionAndRotation.Value = (targetPos, targetRot);
-
-                    await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate, cancellationToken);
-                }
-            }
-            finally
-            {
-                IsMoving.Value = MovingStatus.None;
-            }
-        }
-        
         private void OnDestroy()
         {
             _positionAndRotation.Dispose();
+            _isMoving.Dispose();
+            _cancellationTokenSource.Cancel();
+            _cancellationTokenSource.Dispose();
         }
-        
+
 #if UNITY_EDITOR
         private void Update()
         {
             // デバッグ用に、Editorだったらインスペクタでposition, rotationが変更されたことを検知する
-            var t = (_transform.position, _transform.rotation);
-            if (_positionAndRotation.Value != t) _positionAndRotation.Value = t;
+            _transform.GetPositionAndRotation(out var pos, out var rot);
+            _positionAndRotation.Value = (pos, rot);
         }
 #endif
-        
     }
 }
