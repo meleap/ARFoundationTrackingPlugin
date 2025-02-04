@@ -32,10 +32,6 @@ namespace Hado.ARFoundation
 
         private bool _isTrackedOnce = false;
 
-        //ARFoundationTrackingPlugin -> WorldAnchorInitializerSampleのためにpublicのものを用意する
-        //TypeCだと不要
-        public IReadOnlyReactiveProperty<MovingStatus> IsMovingProperty => _isMoving;
-
         private readonly ReactiveProperty<(Vector3, Quaternion)> _positionAndRotation =
             new((Vector3.zero, Quaternion.identity));
 
