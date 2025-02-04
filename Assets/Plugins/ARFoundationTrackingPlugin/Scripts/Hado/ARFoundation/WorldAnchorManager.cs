@@ -142,6 +142,7 @@ namespace Hado.ARFoundation
             _cancellationTokenSource.Dispose();
             _cancellationTokenSource = new CancellationTokenSource();
             _isMoving.Value = MovingStatus.None;
+            _isTrackedOnce = false;
         }
 
         // フレーム間の移動距離が大きすぎる場合はノイズとして判定する
