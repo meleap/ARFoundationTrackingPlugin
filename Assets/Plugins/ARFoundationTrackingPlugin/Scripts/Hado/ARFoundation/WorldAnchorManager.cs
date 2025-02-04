@@ -89,13 +89,11 @@ namespace Hado.ARFoundation
         private async UniTask MoveAsync((Vector3, Quaternion) start, (Vector3, Quaternion) end,
             CancellationToken cancellationToken)
         {
-            Debug.Log($"WorldAnchorManager MoveAsync: diff {Vector3.Distance(end.Item1, start.Item1):F3}, {Quaternion.Angle(start.Item2, end.Item2):F3}");
             _isMoving.Value = MovingStatus.Moving;
             try
             {
                 if (!_isTrackedOnce)
                 {
-                    Debug.Log("WorldAnchorManager MoveFirst");
                     _positionAndRotation.Value = (end.Item1, end.Item2); // 初めてトラッキングしたときは即座に移動させる
                     // MoveTime の間移動したことにして、ImageTrackingの頻度を変えないようにします
                     await UniTask.Delay(TimeSpan.FromSeconds(MoveTime), cancellationToken: cancellationToken);
@@ -106,13 +104,11 @@ namespace Hado.ARFoundation
                     // トラッキングが安定している場合はキャリブレーションが不要と判断して移動させないようにします
                     // 物理的なカメラの位置が固定のときに小さな移動を繰り返すと揺れが目立ってしまうため、移動を抑制します
                     // 例えば角度が1度ずれると、8m先では0.14m程度ずれます
-                    Debug.Log("WorldAnchorManager MoveSkip");
                     // MoveTime の間移動したことにして、ImageTrackingの頻度を変えないようにします
                     await UniTask.Delay(TimeSpan.FromSeconds(MoveTime), cancellationToken: cancellationToken);
                 }
                 else
                 {
-                    Debug.Log("WorldAnchorManager MoveCore");
                     await MoveCoreAsync(start, end, cancellationToken);
                 }
 
