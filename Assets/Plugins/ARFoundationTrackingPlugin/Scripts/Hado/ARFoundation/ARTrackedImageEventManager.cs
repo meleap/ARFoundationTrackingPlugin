@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UniRx;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
@@ -11,13 +12,41 @@ namespace Hado.ARFoundation
     public class ARTrackedImageEventManager : MonoBehaviour
     {
         private readonly Subject<ARTrackedImage> _trackImagesChangedSubject = new();
-        public IObservable<Anchor> TrackedImagesChangedObservable => _trackImagesChangedSubject
+
+        public IObservable<(Vector3, Quaternion)> TrackedImagesChangedObservable => _trackImagesChangedSubject
             .Select(trackedImage => GetOrNullAnchorWithClear(trackedImage.referenceImage.name))
-            .Where(anchor => anchor != null);
+            .Where(anchor => anchor != null)
+            .Select(x =>
+            {
+                x.transform.GetPositionAndRotation(out var pos, out var rot);
+                return (pos, rot);
+            })
+            .Buffer(NoiseCheckSampleCount + 1)
+            .Where(l => !IsNoiseData(l))
+            .Select(l => l.Last()); // 最新のデータを取得
 
         private ARTrackedImageManager _mTrackedImageManager;
 
         private readonly Dictionary<string, Anchor> _detectedReferenceAnchors = new();
+
+        /// フレーム間の移動距離がこの値より大きい場合はノイズとして捨てる
+        public float MovingNoiseThreshold { get; set; } = 0.05f;
+
+        /// MovingNoiseThresholdのチェックを何回ぶん行うか
+        public int NoiseCheckSampleCount { get; set; } = 2;
+
+        // フレーム間の移動距離が大きすぎる場合はノイズとして判定する
+        private bool IsNoiseData(IList<(Vector3, Quaternion)> positionAndRotations)
+        {
+            var threshold = MovingNoiseThreshold * MovingNoiseThreshold;
+            for (var i = 0; i < positionAndRotations.Count - 1; i++)
+            {
+                var d = Vector3.SqrMagnitude(positionAndRotations[i].Item1 - positionAndRotations[i + 1].Item1);
+                if (d > threshold) return true;
+            }
+
+            return false;
+        }
 
         private Anchor GetOrNullAnchorWithClear(string imageName)
         {

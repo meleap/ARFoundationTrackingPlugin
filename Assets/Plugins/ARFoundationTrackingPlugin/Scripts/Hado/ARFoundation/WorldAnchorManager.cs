@@ -1,7 +1,5 @@
 ﻿#nullable enable
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UniRx;
@@ -19,12 +17,6 @@ namespace Hado.ARFoundation
     public class WorldAnchorManager : MonoBehaviour
     {
         public TimeSpan MovingTime { get; set; } = TimeSpan.FromSeconds(1.5f);
-
-        /// フレーム間の移動距離がこの値より大きい場合はノイズとして捨てる
-        public float MovingNoiseThreshold { get; set; } = 0.05f;
-
-        /// MovingNoiseThresholdのチェックを何回ぶん行うか
-        public int NoiseCheckSampleCount { get; set; } = 2;
 
         private readonly ReactiveProperty<MovingStatus> _isMoving = new(MovingStatus.None);
 
@@ -58,14 +50,6 @@ namespace Hado.ARFoundation
                 .AddTo(this);
 
             _arTrackedImageEventManager.TrackedImagesChangedObservable
-                .Select(x =>
-                {
-                    x.transform.GetPositionAndRotation(out var pos, out var rot);
-                    return (pos, rot);
-                })
-                .Buffer(NoiseCheckSampleCount + 1)
-                .Where(l => !IsNoiseData(l))
-                .Select(l => l.Last()) // 最新のデータを取得
                 .Where(_ => _isMoving.Value == MovingStatus.None) // 補正中は流さない
                 .Subscribe(end =>
                 {
@@ -134,19 +118,6 @@ namespace Hado.ARFoundation
             _cancellationTokenSource = new CancellationTokenSource();
             _isMoving.Value = MovingStatus.None;
             _isTrackedOnce = false;
-        }
-
-        // フレーム間の移動距離が大きすぎる場合はノイズとして判定する
-        private bool IsNoiseData(IList<(Vector3, Quaternion)> positionAndRotations)
-        {
-            var threshold = MovingNoiseThreshold * MovingNoiseThreshold;
-            for (var i = 0; i < positionAndRotations.Count - 1; i++)
-            {
-                var d = Vector3.SqrMagnitude(positionAndRotations[i].Item1 - positionAndRotations[i + 1].Item1);
-                if (d > threshold) return true;
-            }
-
-            return false;
         }
 
         public IDisposable RegisterIntervalTracking(CancellationToken cancellationToken, TimeSpan interval)
