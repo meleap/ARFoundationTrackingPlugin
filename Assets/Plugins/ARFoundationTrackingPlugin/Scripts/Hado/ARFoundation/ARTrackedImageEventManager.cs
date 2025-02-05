@@ -15,17 +15,15 @@ namespace Hado.ARFoundation
 
         private ARTrackedImageManager _mTrackedImageManager;
 
-        private readonly Dictionary<string, GameObject> _detectedReferenceAnchors = new();
+        private readonly Dictionary<string, Anchor> _detectedReferenceAnchors = new();
 
-        public GameObject GetReferenceAnchor(string imageName)
+        public Anchor GetReferenceAnchor(string imageName)
         {
-            var ret = _detectedReferenceAnchors.GetValueOrDefault(imageName);
-
             // 初回マーカー認識後にNative側で"UnityARKit: Updating ARSession configuration"があると、keyはあるのにAnchorがnullという状態が発生する
             // その場合は一度クリアして再度Anchorを設定する
-            if (ret == null) Clear();
-
-            return ret;
+            var anchor = _detectedReferenceAnchors.GetValueOrDefault(imageName);
+            if (anchor == null) Clear();
+            return anchor;
         }
 
         public void Clear()
@@ -92,7 +90,7 @@ namespace Hado.ARFoundation
             t.localPosition = m.MultiplyPoint3x4(t.localPosition);
             t.rotation *= Quaternion.Inverse(offset.Rotation);
 
-            _detectedReferenceAnchors.Add(markerName, anchor.gameObject);
+            _detectedReferenceAnchors.Add(markerName, anchor);
         }
     }
 }
