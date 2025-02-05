@@ -10,14 +10,12 @@ namespace Hado.ARFoundation
     [RequireComponent(typeof(ARTrackedImageManager))]
     public class ARTrackedImageEventManager : MonoBehaviour
     {
-        private readonly Subject<ARTrackedImage> _trackImagesChangedSubject = new Subject<ARTrackedImage>();
-
+        private readonly Subject<ARTrackedImage> _trackImagesChangedSubject = new();
         public IObservable<ARTrackedImage> TrackedImagesChangedObservable => _trackImagesChangedSubject.AsObservable();
 
         private ARTrackedImageManager _mTrackedImageManager;
 
-        private readonly Dictionary<string, GameObject>
-            _detectedReferenceAnchors = new Dictionary<string, GameObject>();
+        private readonly Dictionary<string, GameObject> _detectedReferenceAnchors = new();
 
         public GameObject GetReferenceAnchor(string imageName)
         {
