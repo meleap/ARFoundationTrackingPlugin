@@ -11,13 +11,15 @@ namespace Hado.ARFoundation
     public class ARTrackedImageEventManager : MonoBehaviour
     {
         private readonly Subject<ARTrackedImage> _trackImagesChangedSubject = new();
-        public IObservable<ARTrackedImage> TrackedImagesChangedObservable => _trackImagesChangedSubject.AsObservable();
+        public IObservable<Anchor> TrackedImagesChangedObservable => _trackImagesChangedSubject
+            .Select(trackedImage => GetOrNullAnchorWithClear(trackedImage.referenceImage.name))
+            .Where(anchor => anchor != null);
 
         private ARTrackedImageManager _mTrackedImageManager;
 
         private readonly Dictionary<string, Anchor> _detectedReferenceAnchors = new();
 
-        public Anchor GetReferenceAnchor(string imageName)
+        private Anchor GetOrNullAnchorWithClear(string imageName)
         {
             // 初回マーカー認識後にNative側で"UnityARKit: Updating ARSession configuration"があると、keyはあるのにAnchorがnullという状態が発生する
             // その場合は一度クリアして再度Anchorを設定する

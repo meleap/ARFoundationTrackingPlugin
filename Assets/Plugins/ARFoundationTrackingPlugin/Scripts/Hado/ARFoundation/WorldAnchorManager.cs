@@ -59,8 +59,6 @@ namespace Hado.ARFoundation
 
             _arTrackedImageEventManager.TrackedImagesChangedObservable
                 .Where(_ => _isMoving.Value == MovingStatus.None) // 補正中は流さない
-                .Select(t => _arTrackedImageEventManager.GetReferenceAnchor(t.referenceImage.name))
-                .Where(x => x != null) // なぜnullがあるかはARTrackedImageEventManagerを参照
                 .Select(x =>
                 {
                     x.transform.GetPositionAndRotation(out var pos, out var rot);
