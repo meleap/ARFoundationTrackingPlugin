@@ -6,7 +6,6 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using UniRx;
 using UnityEngine;
-using UnityEngine.XR.ARFoundation;
 
 namespace Hado.ARFoundation
 {
@@ -59,7 +58,6 @@ namespace Hado.ARFoundation
                 .AddTo(this);
 
             _arTrackedImageEventManager.TrackedImagesChangedObservable
-                .Where(_ => ARSession.state >= ARSessionState.SessionInitializing)
                 .Where(_ => _isMoving.Value == MovingStatus.None) // 補正中は流さない
                 .Select(t => _arTrackedImageEventManager.GetReferenceAnchor(t.referenceImage.name))
                 .Where(x => x != null) // なぜnullがあるかはARTrackedImageEventManagerを参照

@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using Cysharp.Threading.Tasks;
-using UnityEngine;
-using UnityEngine.XR.ARSubsystems;
-using UnityEngine.XR.ARFoundation;
 using UniRx;
+using UnityEngine;
+using UnityEngine.XR.ARFoundation;
+using UnityEngine.XR.ARSubsystems;
 
 namespace Hado.ARFoundation
 {
@@ -55,6 +54,9 @@ namespace Hado.ARFoundation
 
         private void OnTrackedImagesChanged(ARTrackedImagesChangedEventArgs eventArgs)
         {
+            // 安定するまでの間は何もしない
+            if (ARSession.state < ARSessionState.SessionInitializing) return;
+
             foreach (var trackedImage in eventArgs.added)
             {
                 // 初回だけの処理はここに
