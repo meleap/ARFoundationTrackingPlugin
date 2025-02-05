@@ -58,7 +58,6 @@ namespace Hado.ARFoundation
                 .AddTo(this);
 
             _arTrackedImageEventManager.TrackedImagesChangedObservable
-                .Where(_ => _isMoving.Value == MovingStatus.None) // 補正中は流さない
                 .Select(x =>
                 {
                     x.transform.GetPositionAndRotation(out var pos, out var rot);
@@ -67,6 +66,7 @@ namespace Hado.ARFoundation
                 .Buffer(NoiseCheckSampleCount + 1)
                 .Where(l => !IsNoiseData(l))
                 .Select(l => l.Last()) // 最新のデータを取得
+                .Where(_ => _isMoving.Value == MovingStatus.None) // 補正中は流さない
                 .Subscribe(end =>
                 {
                     _cancellationTokenSource.Cancel();
