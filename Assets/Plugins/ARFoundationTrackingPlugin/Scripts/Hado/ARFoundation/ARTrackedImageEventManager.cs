@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using UniRx;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
@@ -11,55 +8,28 @@ namespace Hado.ARFoundation
     [RequireComponent(typeof(ARTrackedImageManager))]
     public class ARTrackedImageEventManager : MonoBehaviour
     {
-        private readonly Subject<ARTrackedImage> _trackImagesChangedSubject = new();
+        private readonly ARTrackedImageStabler _arTrackedImageStabler = new();
 
-        public IObservable<(Vector3, Quaternion)> TrackedImagesChangedObservable => _trackImagesChangedSubject
-            .Select(trackedImage => GetOrNullAnchorWithClear(trackedImage.referenceImage.name))
-            .Where(anchor => anchor != null)
-            .Select(x =>
-            {
-                x.transform.GetPositionAndRotation(out var pos, out var rot);
-                return (pos, rot);
-            })
-            .Buffer(NoiseCheckSampleCount + 1)
-            .Where(l => !IsNoiseData(l))
-            .Select(l => l.Last()); // 最新のデータを取得
+        public IObservable<(Vector3, Quaternion)> TrackedImagesChangedObservable =>
+            _arTrackedImageStabler.TrackedImageObservable;
 
         private ARTrackedImageManager _mTrackedImageManager;
 
-        private readonly Dictionary<string, Anchor> _detectedReferenceAnchors = new();
-
-        /// フレーム間の移動距離がこの値より大きい場合はノイズとして捨てる
-        public float MovingNoiseThreshold { get; set; } = 0.05f;
-
-        /// MovingNoiseThresholdのチェックを何回ぶん行うか
-        public int NoiseCheckSampleCount { get; set; } = 2;
-
-        // フレーム間の移動距離が大きすぎる場合はノイズとして判定する
-        private bool IsNoiseData(IList<(Vector3, Quaternion)> positionAndRotations)
+        public float MovingNoiseThreshold
         {
-            var threshold = MovingNoiseThreshold * MovingNoiseThreshold;
-            for (var i = 0; i < positionAndRotations.Count - 1; i++)
-            {
-                var d = Vector3.SqrMagnitude(positionAndRotations[i].Item1 - positionAndRotations[i + 1].Item1);
-                if (d > threshold) return true;
-            }
-
-            return false;
+            get => _arTrackedImageStabler.MovingNoiseThreshold;
+            set => _arTrackedImageStabler.MovingNoiseThreshold = value;
         }
 
-        private Anchor GetOrNullAnchorWithClear(string imageName)
+        public int NoiseCheckSampleCount
         {
-            // 初回マーカー認識後にNative側で"UnityARKit: Updating ARSession configuration"があると、keyはあるのにAnchorがnullという状態が発生する
-            // その場合は一度クリアして再度Anchorを設定する
-            var anchor = _detectedReferenceAnchors.GetValueOrDefault(imageName);
-            if (anchor == null) Clear();
-            return anchor;
+            get => _arTrackedImageStabler.NoiseCheckSampleCount;
+            set => _arTrackedImageStabler.NoiseCheckSampleCount = value;
         }
 
         public void Clear()
         {
-            _detectedReferenceAnchors.Clear();
+            _arTrackedImageStabler.Clear();
         }
 
         private void Awake()
@@ -88,26 +58,21 @@ namespace Hado.ARFoundation
             {
                 // 初回だけの処理はここに
                 Debug.Log($"OnTrackedImagesChanged: add: {trackedImage.trackingState}");
-                if (!_detectedReferenceAnchors.ContainsKey(trackedImage.referenceImage.name))
-                    InitAnchorTransform(trackedImage);
-                _trackImagesChangedSubject.OnNext(trackedImage);
+                _arTrackedImageStabler.TryInitAnchorTransformIfNotExists(trackedImage, InitAnchorTransform);
+                _arTrackedImageStabler.OnTrackedImage(trackedImage);
             }
 
             foreach (var trackedImage in eventArgs.updated)
             {
                 if (trackedImage.trackingState != TrackingState.Tracking) return;
-
-                //TODO: 稀に初回detectなのにupdateで渡されることがある
-                if (!_detectedReferenceAnchors.ContainsKey(trackedImage.referenceImage.name))
-                    InitAnchorTransform(trackedImage);
-
-
                 Debug.Log($"OnTrackedImagesChanged: updated: {trackedImage.trackingState}");
-                _trackImagesChangedSubject.OnNext(trackedImage);
+                //TODO: 稀に初回detectなのにupdateで渡されることがある
+                _arTrackedImageStabler.TryInitAnchorTransformIfNotExists(trackedImage, InitAnchorTransform);
+                _arTrackedImageStabler.OnTrackedImage(trackedImage);
             }
         }
 
-        private void InitAnchorTransform(ARTrackedImage trackedImage)
+        private static Anchor InitAnchorTransform(ARTrackedImage trackedImage)
         {
             Debug.Log($"InitAnchorTransform: {trackedImage.referenceImage.name}");
             var markerName = trackedImage.referenceImage.name;
@@ -120,8 +85,7 @@ namespace Hado.ARFoundation
             var t = anchor.gameObject.transform;
             t.localPosition = m.MultiplyPoint3x4(t.localPosition);
             t.rotation *= Quaternion.Inverse(offset.Rotation);
-
-            _detectedReferenceAnchors.Add(markerName, anchor);
+            return anchor;
         }
     }
 }
