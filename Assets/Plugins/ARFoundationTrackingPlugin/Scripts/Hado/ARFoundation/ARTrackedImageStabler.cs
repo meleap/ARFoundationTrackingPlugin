@@ -12,31 +12,43 @@ namespace Hado.ARFoundation
         // marker name -> Anchor
         private readonly Dictionary<string, Anchor> _detectedAnchorDic = new();
         private readonly Subject<ARTrackedImage> _subject = new();
+        private IDisposable _disposable;
+
+        private float movingNoiseThreshold = 0.05f;
 
         /// フレーム間の移動距離がこの値より大きい場合はノイズとして捨てる
-        public float MovingNoiseThreshold { get; set; } = 0.05f;
+        public float MovingNoiseThreshold
+        {
+            get => movingNoiseThreshold;
+            set
+            {
+                movingNoiseThreshold = value;
+                Clear();
+            }
+        }
+
+        private int noiseCheckSampleCount = 2;
 
         /// MovingNoiseThresholdのチェックを何回ぶん行うか
-        public int NoiseCheckSampleCount { get; set; } = 2;
+        public int NoiseCheckSampleCount
+        {
+            get => noiseCheckSampleCount;
+            set
+            {
+                noiseCheckSampleCount = value;
+                Clear();
+            }
+        }
+
+        private readonly Subject<(Vector3, Quaternion)> _trackedImageSubject = new();
 
         // このクラスはマーカーだけの責務にしたいが、今の実装上やむなくWorldAnchorの存在に依存している
         /// ImageTrackingで認識したマーカーの座標が複数フレームにわたって安定したとき、移動すべきWorldAnchorの座標を返します
-        public readonly IObservable<(Vector3, Quaternion)> TrackedImageObservable;
+        public IObservable<(Vector3, Quaternion)> TrackedImageObservable => _trackedImageSubject;
 
         public ARTrackedImageStabler()
         {
-            TrackedImageObservable = _subject
-                .Select(trackedImage => GetOrNullAnchorWithClear(trackedImage.referenceImage.name))
-                .Where(anchor => anchor != null)
-                .Select(x =>
-                {
-                    x.transform.GetPositionAndRotation(out var pos, out var rot);
-                    return (pos, rot);
-                })
-                .Buffer(NoiseCheckSampleCount + 1)
-                .Where(l => !IsNoiseData(l))
-                .Select(l => l.Last()) // 最新のデータを取得
-                .Publish().RefCount(); // hot変換
+            Clear();
         }
 
         public void OnTrackedImage(ARTrackedImage trackedImage)
@@ -79,11 +91,27 @@ namespace Hado.ARFoundation
         public void Clear()
         {
             _detectedAnchorDic.Clear();
+            _disposable?.Dispose();
+            // パラメータ変更したら反映、ClearしたときにBufferを初期化するためにここでsubscribe
+            _disposable = _subject
+                .Select(trackedImage => GetOrNullAnchorWithClear(trackedImage.referenceImage.name))
+                .Where(anchor => anchor != null)
+                .Select(x =>
+                {
+                    x.transform.GetPositionAndRotation(out var pos, out var rot);
+                    return (pos, rot);
+                })
+                .Buffer(NoiseCheckSampleCount + 1)
+                .Where(l => !IsNoiseData(l))
+                .Select(l => l.Last()) // 最新のデータを取得
+                .Subscribe(_trackedImageSubject);
         }
 
         public void Dispose()
         {
             _subject.Dispose();
+            _trackedImageSubject.Dispose();
+            _disposable?.Dispose();
         }
     }
 }
