@@ -52,7 +52,8 @@ namespace Hado.ARFoundation
         private void OnTrackedImagesChanged(ARTrackedImagesChangedEventArgs eventArgs)
         {
             // 安定するまでの間は何もしない
-            if (ARSession.state < ARSessionState.SessionInitializing) return;
+            // SessionInitializingのときにも呼ばれる可能性がある
+            if (ARSession.state != ARSessionState.SessionTracking) return;
 
             foreach (var trackedImage in eventArgs.added)
             {
