@@ -20,7 +20,11 @@ namespace Hado.ARFoundation
 
         private readonly ReactiveProperty<MovingStatus> _isMoving = new(MovingStatus.None);
 
-        private bool _isTrackedOnce = false;
+        private readonly ReactiveProperty<bool> _calibrated = new(false);
+
+        /// カメラ起動して初めてマーカーを認識してWorldAnchorを移動させたかどうか
+        /// CancelMoveしたらfalseに戻ります
+        public IReadOnlyReactiveProperty<bool> Calibrated => _calibrated;
 
         private readonly ReactiveProperty<(Vector3, Quaternion)> _positionAndRotation =
             new((Vector3.zero, Quaternion.identity));
@@ -59,6 +63,13 @@ namespace Hado.ARFoundation
                     var start = _positionAndRotation.Value;
                     MoveAsync(start, end, _cancellationTokenSource.Token).Forget();
                 }).AddTo(this);
+
+            // Editorのときは、初期値を設定する
+            if (Application.isEditor)
+            {
+                MoveAsync(_positionAndRotation.Value, _positionAndRotation.Value, _cancellationTokenSource.Token)
+                    .Forget();
+            }
         }
 
         private async UniTask MoveAsync((Vector3, Quaternion) start, (Vector3, Quaternion) end,
@@ -67,7 +78,7 @@ namespace Hado.ARFoundation
             _isMoving.Value = MovingStatus.Moving;
             try
             {
-                if (!_isTrackedOnce)
+                if (!_calibrated.Value)
                 {
                     _positionAndRotation.Value = (end.Item1, end.Item2); // 初めてトラッキングしたときは即座に移動させる
                     // MoveTime の間移動したことにして、ImageTrackingの頻度を変えないようにします
@@ -87,7 +98,7 @@ namespace Hado.ARFoundation
                     await MoveCoreAsync(start, end, cancellationToken);
                 }
 
-                _isTrackedOnce = true;
+                _calibrated.Value = true;
             }
             finally
             {
@@ -117,7 +128,7 @@ namespace Hado.ARFoundation
             _cancellationTokenSource.Dispose();
             _cancellationTokenSource = new CancellationTokenSource();
             _isMoving.Value = MovingStatus.None;
-            _isTrackedOnce = false;
+            _calibrated.Value = false;
         }
 
         public IDisposable RegisterIntervalTracking(CancellationToken cancellationToken, TimeSpan interval)
