@@ -63,13 +63,11 @@ namespace Hado.ARFoundation
                     var start = _positionAndRotation.Value;
                     MoveAsync(start, end, _cancellationTokenSource.Token).Forget();
                 }).AddTo(this);
+        }
 
-            // Editorのときは、初期値を設定する
-            if (Application.isEditor)
-            {
-                MoveAsync(_positionAndRotation.Value, _positionAndRotation.Value, _cancellationTokenSource.Token)
-                    .Forget();
-            }
+        public void ForceCalibrate()
+        {
+            _calibrated.Value = true;
         }
 
         private async UniTask MoveAsync((Vector3, Quaternion) start, (Vector3, Quaternion) end,
