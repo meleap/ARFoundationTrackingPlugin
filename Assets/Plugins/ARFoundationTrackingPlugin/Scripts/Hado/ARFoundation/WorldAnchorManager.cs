@@ -7,18 +7,11 @@ using UnityEngine;
 
 namespace Hado.ARFoundation
 {
-    public enum MovingStatus
-    {
-        None,
-        Detecting,
-        Moving
-    }
-
     public class WorldAnchorManager : MonoBehaviour
     {
         public TimeSpan MovingTime { get; set; } = TimeSpan.FromSeconds(1.5f);
 
-        private readonly ReactiveProperty<MovingStatus> _isMoving = new(MovingStatus.None);
+        private readonly ReactiveProperty<bool> _isMoving = new(false);
 
         private readonly ReactiveProperty<bool> _calibrated = new(false);
 
@@ -54,7 +47,7 @@ namespace Hado.ARFoundation
                 .AddTo(this);
 
             _arTrackedImageEventManager.TrackedImagesChangedObservable
-                .Where(_ => _isMoving.Value == MovingStatus.None) // 補正中は流さない
+                .Where(_ => !_isMoving.Value) // 補正中は流さない
                 .Subscribe(end =>
                 {
                     _cancellationTokenSource.Cancel();
@@ -73,7 +66,7 @@ namespace Hado.ARFoundation
         private async UniTask MoveAsync((Vector3, Quaternion) start, (Vector3, Quaternion) end,
             CancellationToken cancellationToken)
         {
-            _isMoving.Value = MovingStatus.Moving;
+            _isMoving.Value = true;
             try
             {
                 if (!_calibrated.Value)
@@ -100,7 +93,7 @@ namespace Hado.ARFoundation
             }
             finally
             {
-                _isMoving.Value = MovingStatus.None;
+                _isMoving.Value = false;
             }
         }
 
@@ -125,7 +118,7 @@ namespace Hado.ARFoundation
             _cancellationTokenSource.Cancel();
             _cancellationTokenSource.Dispose();
             _cancellationTokenSource = new CancellationTokenSource();
-            _isMoving.Value = MovingStatus.None;
+            _isMoving.Value = false;
             _calibrated.Value = false;
         }
 
@@ -136,13 +129,13 @@ namespace Hado.ARFoundation
             // WorldAnchorの移動中はトラッキングを無効にする
             _isMoving
                 .SkipLatestValueOnSubscribe()
-                .Where(s => s == MovingStatus.Moving)
+                .Where(isMoving => isMoving)
                 .Subscribe(_ => _arSessionManager.EnabledImageTracking = false)
                 .AddTo(compositeDisposable);
             // WorldAnchorの移動が終わってしばらくしたらトラッキングを元に戻す
             _isMoving
                 .SkipLatestValueOnSubscribe()
-                .Where(s => s != MovingStatus.Moving)
+                .Where(isMoving => !isMoving)
                 .Delay(interval)
                 .Subscribe(_ =>
                     _arSessionManager.EnabledImageTracking = _arSessionManager.arCamera.enabled) // ARカメラの状態にあわせる
