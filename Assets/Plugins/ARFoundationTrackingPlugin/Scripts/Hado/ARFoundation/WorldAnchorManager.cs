@@ -1,40 +1,23 @@
 ﻿#nullable enable
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UniRx;
 using UnityEngine;
-using UnityEngine.XR.ARFoundation;
 
 namespace Hado.ARFoundation
 {
-    public enum MovingStatus
-    {
-        None,
-        Detecting,
-        Moving
-    }
-
     public class WorldAnchorManager : MonoBehaviour
     {
-        // 移動時間
-        private const float MoveTime = 1.5f;
+        public TimeSpan MovingTime { get; set; } = TimeSpan.FromSeconds(1.5f);
 
-        /// フレーム間の移動距離がこの値より大きい場合はノイズとして捨てる
-        [NonSerialized] public float MovingNoiseThreshold = 0.05f;
+        private readonly ReactiveProperty<bool> _isMoving = new(false);
 
-        /// MovingNoiseThresholdのチェックを何回ぶん行うか
-        [NonSerialized] public int NoiseCheckSampleCount = 2;
+        private readonly ReactiveProperty<bool> _calibrated = new(false);
 
-        private readonly ReactiveProperty<MovingStatus> _isMoving = new(MovingStatus.None);
-
-        private bool _isTrackedOnce = false;
-
-        //ARFoundationTrackingPlugin -> WorldAnchorInitializerSampleのためにpublicのものを用意する
-        //TypeCだと不要
-        public IReadOnlyReactiveProperty<MovingStatus> IsMovingProperty => _isMoving;
+        /// カメラ起動して初めてマーカーを認識してWorldAnchorを移動させたかどうか
+        /// CancelMoveしたらfalseに戻ります
+        public IReadOnlyReactiveProperty<bool> Calibrated => _calibrated;
 
         private readonly ReactiveProperty<(Vector3, Quaternion)> _positionAndRotation =
             new((Vector3.zero, Quaternion.identity));
@@ -64,18 +47,7 @@ namespace Hado.ARFoundation
                 .AddTo(this);
 
             _arTrackedImageEventManager.TrackedImagesChangedObservable
-                .Where(_ => ARSession.state >= ARSessionState.SessionInitializing)
-                .Where(_ => _isMoving.Value == MovingStatus.None) // 補正中は流さない
-                .Select(t => _arTrackedImageEventManager.GetReferenceAnchor(t.referenceImage.name))
-                .Where(x => x != null) // なぜnullがあるかはARTrackedImageEventManagerを参照
-                .Select(x =>
-                {
-                    x.transform.GetPositionAndRotation(out var pos, out var rot);
-                    return (pos, rot);
-                })
-                .Buffer(NoiseCheckSampleCount + 1)
-                .Where(l => !IsNoiseData(l))
-                .Select(l => l.Last()) // 最新のデータを取得
+                .Where(_ => !_isMoving.Value) // 補正中は流さない
                 .Subscribe(end =>
                 {
                     _cancellationTokenSource.Cancel();
@@ -86,17 +58,22 @@ namespace Hado.ARFoundation
                 }).AddTo(this);
         }
 
+        public void ForceCalibrate()
+        {
+            _calibrated.Value = true;
+        }
+
         private async UniTask MoveAsync((Vector3, Quaternion) start, (Vector3, Quaternion) end,
             CancellationToken cancellationToken)
         {
-            _isMoving.Value = MovingStatus.Moving;
+            _isMoving.Value = true;
             try
             {
-                if (!_isTrackedOnce)
+                if (!_calibrated.Value)
                 {
                     _positionAndRotation.Value = (end.Item1, end.Item2); // 初めてトラッキングしたときは即座に移動させる
                     // MoveTime の間移動したことにして、ImageTrackingの頻度を変えないようにします
-                    await UniTask.Delay(TimeSpan.FromSeconds(MoveTime), cancellationToken: cancellationToken);
+                    await UniTask.Delay(MovingTime, cancellationToken: cancellationToken);
                 }
                 else if (Vector3.Distance(end.Item1, start.Item1) < 0.05f &&
                          Quaternion.Angle(start.Item2, end.Item2) < 1.5f)
@@ -105,18 +82,18 @@ namespace Hado.ARFoundation
                     // 物理的なカメラの位置が固定のときに小さな移動を繰り返すと揺れが目立ってしまうため、移動を抑制します
                     // 例えば角度が1度ずれると、8m先では0.14m程度ずれます
                     // MoveTime の間移動したことにして、ImageTrackingの頻度を変えないようにします
-                    await UniTask.Delay(TimeSpan.FromSeconds(MoveTime), cancellationToken: cancellationToken);
+                    await UniTask.Delay(MovingTime, cancellationToken: cancellationToken);
                 }
                 else
                 {
                     await MoveCoreAsync(start, end, cancellationToken);
                 }
 
-                _isTrackedOnce = true;
+                _calibrated.Value = true;
             }
             finally
             {
-                _isMoving.Value = MovingStatus.None;
+                _isMoving.Value = false;
             }
         }
 
@@ -126,7 +103,7 @@ namespace Hado.ARFoundation
             var t = 0f; // 0~1 正規化した時間
             while (!cancellationToken.IsCancellationRequested)
             {
-                t += Time.deltaTime / MoveTime;
+                t += Time.deltaTime / (float)MovingTime.TotalSeconds;
                 var lerpPoint = Mathf.Clamp01(1 - Mathf.Pow(1 - t, 5)); // easeOutQuint
                 var pos = Vector3.Lerp(start.Item1, end.Item1, lerpPoint);
                 var rot = Quaternion.Lerp(start.Item2, end.Item2, lerpPoint);
@@ -141,39 +118,25 @@ namespace Hado.ARFoundation
             _cancellationTokenSource.Cancel();
             _cancellationTokenSource.Dispose();
             _cancellationTokenSource = new CancellationTokenSource();
-            _isMoving.Value = MovingStatus.None;
-            _isTrackedOnce = false;
+            _isMoving.Value = false;
+            _calibrated.Value = false;
         }
 
-        // フレーム間の移動距離が大きすぎる場合はノイズとして判定する
-        private bool IsNoiseData(IList<(Vector3, Quaternion)> positionAndRotations)
-        {
-            var threshold = MovingNoiseThreshold * MovingNoiseThreshold;
-            for (var i = 0; i < positionAndRotations.Count - 1; i++)
-            {
-                var d = Vector3.SqrMagnitude(positionAndRotations[i].Item1 - positionAndRotations[i + 1].Item1);
-                if (d > threshold) return true;
-            }
-
-            return false;
-        }
-
-        public IDisposable RegisterIntervalTracking(CancellationToken cancellationToken,
-            int imageTrackingIntervalMils = 3000)
+        public IDisposable RegisterIntervalTracking(CancellationToken cancellationToken, TimeSpan interval)
         {
             var compositeDisposable = new CompositeDisposable();
             cancellationToken.Register(() => compositeDisposable.Dispose());
             // WorldAnchorの移動中はトラッキングを無効にする
             _isMoving
                 .SkipLatestValueOnSubscribe()
-                .Where(s => s == MovingStatus.Moving)
+                .Where(isMoving => isMoving)
                 .Subscribe(_ => _arSessionManager.EnabledImageTracking = false)
                 .AddTo(compositeDisposable);
             // WorldAnchorの移動が終わってしばらくしたらトラッキングを元に戻す
             _isMoving
                 .SkipLatestValueOnSubscribe()
-                .Where(s => s != MovingStatus.Moving)
-                .Delay(TimeSpan.FromMilliseconds(imageTrackingIntervalMils))
+                .Where(isMoving => !isMoving)
+                .Delay(interval)
                 .Subscribe(_ =>
                     _arSessionManager.EnabledImageTracking = _arSessionManager.arCamera.enabled) // ARカメラの状態にあわせる
                 .AddTo(compositeDisposable);

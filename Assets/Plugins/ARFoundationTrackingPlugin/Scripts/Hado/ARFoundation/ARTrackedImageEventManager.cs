@@ -1,39 +1,35 @@
 ﻿using System;
-using System.Collections.Generic;
-using Cysharp.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.XR.ARSubsystems;
 using UnityEngine.XR.ARFoundation;
-using UniRx;
+using UnityEngine.XR.ARSubsystems;
 
 namespace Hado.ARFoundation
 {
     [RequireComponent(typeof(ARTrackedImageManager))]
     public class ARTrackedImageEventManager : MonoBehaviour
     {
-        private readonly Subject<ARTrackedImage> _trackImagesChangedSubject = new Subject<ARTrackedImage>();
+        private readonly ARTrackedImageStabler _arTrackedImageStabler = new();
 
-        public IObservable<ARTrackedImage> TrackedImagesChangedObservable => _trackImagesChangedSubject.AsObservable();
+        public IObservable<(Vector3, Quaternion)> TrackedImagesChangedObservable =>
+            _arTrackedImageStabler.TrackedImageObservable;
 
         private ARTrackedImageManager _mTrackedImageManager;
 
-        private readonly Dictionary<string, GameObject>
-            _detectedReferenceAnchors = new Dictionary<string, GameObject>();
-
-        public GameObject GetReferenceAnchor(string imageName)
+        public float MovingNoiseThreshold
         {
-            var ret = _detectedReferenceAnchors.GetValueOrDefault(imageName);
+            get => _arTrackedImageStabler.MovingNoiseThreshold;
+            set => _arTrackedImageStabler.MovingNoiseThreshold = value;
+        }
 
-            // 初回マーカー認識後にNative側で"UnityARKit: Updating ARSession configuration"があると、keyはあるのにAnchorがnullという状態が発生する
-            // その場合は一度クリアして再度Anchorを設定する
-            if (ret == null) Clear();
-
-            return ret;
+        public int NoiseCheckSampleCount
+        {
+            get => _arTrackedImageStabler.NoiseCheckSampleCount;
+            set => _arTrackedImageStabler.NoiseCheckSampleCount = value;
         }
 
         public void Clear()
         {
-            _detectedReferenceAnchors.Clear();
+            _arTrackedImageStabler.Clear();
         }
 
         private void Awake()
@@ -55,30 +51,29 @@ namespace Hado.ARFoundation
 
         private void OnTrackedImagesChanged(ARTrackedImagesChangedEventArgs eventArgs)
         {
+            // 安定するまでの間は何もしない
+            // SessionInitializingのときにも呼ばれる可能性がある
+            if (ARSession.state != ARSessionState.SessionTracking) return;
+
             foreach (var trackedImage in eventArgs.added)
             {
                 // 初回だけの処理はここに
                 Debug.Log($"OnTrackedImagesChanged: add: {trackedImage.trackingState}");
-                if (!_detectedReferenceAnchors.ContainsKey(trackedImage.referenceImage.name))
-                    InitAnchorTransform(trackedImage);
-                _trackImagesChangedSubject.OnNext(trackedImage);
+                _arTrackedImageStabler.TryInitAnchorTransformIfNotExists(trackedImage, InitAnchorTransform);
+                _arTrackedImageStabler.OnTrackedImage(trackedImage);
             }
 
             foreach (var trackedImage in eventArgs.updated)
             {
                 if (trackedImage.trackingState != TrackingState.Tracking) return;
-
-                //TODO: 稀に初回detectなのにupdateで渡されることがある
-                if (!_detectedReferenceAnchors.ContainsKey(trackedImage.referenceImage.name))
-                    InitAnchorTransform(trackedImage);
-
-
                 Debug.Log($"OnTrackedImagesChanged: updated: {trackedImage.trackingState}");
-                _trackImagesChangedSubject.OnNext(trackedImage);
+                //TODO: 稀に初回detectなのにupdateで渡されることがある
+                _arTrackedImageStabler.TryInitAnchorTransformIfNotExists(trackedImage, InitAnchorTransform);
+                _arTrackedImageStabler.OnTrackedImage(trackedImage);
             }
         }
 
-        private void InitAnchorTransform(ARTrackedImage trackedImage)
+        private static Anchor InitAnchorTransform(ARTrackedImage trackedImage)
         {
             Debug.Log($"InitAnchorTransform: {trackedImage.referenceImage.name}");
             var markerName = trackedImage.referenceImage.name;
@@ -91,8 +86,7 @@ namespace Hado.ARFoundation
             var t = anchor.gameObject.transform;
             t.localPosition = m.MultiplyPoint3x4(t.localPosition);
             t.rotation *= Quaternion.Inverse(offset.Rotation);
-
-            _detectedReferenceAnchors.Add(markerName, anchor.gameObject);
+            return anchor;
         }
     }
 }
