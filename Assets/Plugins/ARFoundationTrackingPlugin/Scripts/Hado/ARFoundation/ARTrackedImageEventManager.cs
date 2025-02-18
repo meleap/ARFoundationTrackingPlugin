@@ -84,8 +84,10 @@ namespace Hado.ARFoundation
             Debug.Log($"Anchor Offset: {offset.Position}, {offset.Rotation.eulerAngles}");
 
             var t = anchor.gameObject.transform;
+            t.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
             t.localPosition = m.MultiplyPoint3x4(t.localPosition);
             t.rotation *= Quaternion.Inverse(offset.Rotation);
+            Debug.Log($"Set Anchor Position: {t.localPosition}, {t.localRotation.eulerAngles}");;
             return anchor;
         }
     }
