@@ -45,7 +45,6 @@ namespace Hado.ARFoundation
         {
             set
             {
-                Debug.Log($"Change EnabledImageTracking: {value}");
                 arTrackedImageManager.enabled = value;
                 arTrackedImageEventManager.enabled = value;
 
