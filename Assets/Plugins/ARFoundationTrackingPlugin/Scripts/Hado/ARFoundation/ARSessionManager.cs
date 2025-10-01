@@ -2,6 +2,8 @@
 using System.Linq;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using LapsaAR.Extensions;
+using LapsaAR.Helpers;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem.XR;
@@ -144,6 +146,17 @@ namespace Hado.ARFoundation
             catch (OperationCanceledException e)
             {
                 throw new OperationCanceledException(e.Message);
+            }
+
+            await arCameraManager.WaitForFrameReceivedAsync(ct);
+            Debug.Log($"CurrentConfiguration: {arCameraManager.GetCurrentConfigurationValue()}");
+            Debug.Log($"Configurations: {string.Join("\n", arCameraManager.GetConfigurationValues())}");
+            if (SystemInfo.deviceModel == "iPhone17,5") // iPhone 16e
+            {
+                // デフォルトの1920 x 1440, 60FPS から 1280 x 720, 60FPSに変更
+                // iPhone16eで1920 x 1440, 60FPSに設定すると安定して60FPS出ないためカメラ映像がカクついて酔いやすいです。解像度を下げると軽減されます
+                Debug.Log($"Changing to 4: {KnownARCameraConfigurations.iPhone16e[4]}");
+                arCameraManager.ApplyConfigurationValue(KnownARCameraConfigurations.iPhone16e[4]);
             }
 
             // デフォルトのカメラ設定を保存します
