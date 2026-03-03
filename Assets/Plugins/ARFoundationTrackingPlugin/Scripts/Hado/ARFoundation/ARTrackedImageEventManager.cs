@@ -1,4 +1,5 @@
 ﻿using System;
+using UniRx;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
@@ -8,10 +9,14 @@ namespace Hado.ARFoundation
     [RequireComponent(typeof(ARTrackedImageManager))]
     public class ARTrackedImageEventManager : MonoBehaviour
     {
+        private const string GroundMarkerName = "GroundMarker";
         private readonly ARTrackedImageStabler _arTrackedImageStabler = new();
+        private readonly ReactiveProperty<bool> _groundMarkerTracked = new(false);
 
         public IObservable<(Vector3, Quaternion)> TrackedImagesChangedObservable =>
             _arTrackedImageStabler.TrackedImageObservable;
+
+        public IReadOnlyReactiveProperty<bool> GroundMarkerTracked => _groundMarkerTracked;
 
         private ARTrackedImageManager _mTrackedImageManager;
 
@@ -30,6 +35,7 @@ namespace Hado.ARFoundation
         public void Clear()
         {
             _arTrackedImageStabler.Clear();
+            _groundMarkerTracked.Value = false;
         }
 
         private void Awake()
@@ -55,6 +61,7 @@ namespace Hado.ARFoundation
 
             foreach (var trackedImage in eventArgs.added)
             {
+                CheckGroundMarkerTracked(trackedImage);
                 _arTrackedImageStabler.TryInitAnchorTransformIfNotExists(trackedImage, InitAnchorTransform);
                 _arTrackedImageStabler.OnTrackedImage(trackedImage);
             }
@@ -62,8 +69,17 @@ namespace Hado.ARFoundation
             foreach (var trackedImage in eventArgs.updated)
             {
                 if (trackedImage.trackingState != TrackingState.Tracking) return;
+                CheckGroundMarkerTracked(trackedImage);
                 _arTrackedImageStabler.TryInitAnchorTransformIfNotExists(trackedImage, InitAnchorTransform);
                 _arTrackedImageStabler.OnTrackedImage(trackedImage);
+            }
+        }
+
+        private void CheckGroundMarkerTracked(ARTrackedImage trackedImage)
+        {
+            if (trackedImage.referenceImage.name == GroundMarkerName)
+            {
+                _groundMarkerTracked.Value = true;
             }
         }
 
